@@ -83,6 +83,10 @@ function renderImages(images) {
   });
 }
 
+document.getElementById('support-btn').addEventListener('click', () => {
+  chrome.tabs.create({ url: 'https://ko-fi.com/echos0507' });
+});
+
 downloadAllBtn.addEventListener('click', () => {
   if (!currentImages.length) return;
   chrome.runtime.sendMessage({ type: 'START_DOWNLOAD', payload: currentImages });

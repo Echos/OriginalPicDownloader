@@ -55,6 +55,7 @@
   "shortcutClosePreview":{ "message": "Close preview" },
   "shortcutNote":        { "message": "To change shortcuts, open <a href=\"chrome://extensions/shortcuts\" target=\"_blank\">chrome://extensions/shortcuts</a>." },
 
+  "btnSupport": { "message": "♥ Support" },
   "btnSaveSettings": { "message": "Save Settings" },
   "savedMsg":        { "message": "Saved" },
   "disclaimer":      { "message": "This extension is an independent, unofficial tool and is not affiliated with, endorsed by, or sponsored by X Corp. or Twitter, Inc." }

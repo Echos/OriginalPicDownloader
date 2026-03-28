@@ -55,6 +55,7 @@
   "shortcutClosePreview":{ "message": "プレビューを閉じる" },
   "shortcutNote":        { "message": "ショートカットを変更するには <a href=\"chrome://extensions/shortcuts\" target=\"_blank\">chrome://extensions/shortcuts</a> を開いてください。" },
 
+  "btnSupport": { "message": "♥ サポート" },
   "btnSaveSettings": { "message": "設定を保存" },
   "savedMsg":        { "message": "保存しました" },
   "disclaimer":      { "message": "This extension is an independent, unofficial tool and is not affiliated with, endorsed by, or sponsored by X Corp. or Twitter, Inc." }
