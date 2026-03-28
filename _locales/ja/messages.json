@@ -1,0 +1,61 @@
+{
+  "appName":        { "message": "OriginalPicDownloader" },
+  "appDescription": { "message": "X (x.com) の投稿からオリジナル画質の画像を保存します。X Corp. とは無関係の独立ツールです。" },
+
+  "cmdDownloadHovered": { "message": "ホバー中または選択中のツイート画像をダウンロード" },
+  "cmdDownloadAll":     { "message": "選択中の投稿の全画像をダウンロード" },
+
+  "statusHoverPrompt": { "message": "ツイートにカーソルを合わせてください" },
+  "statusNotXTab":     { "message": "X のタブがアクティブではありません" },
+  "statusOpenX":       { "message": "X (Twitter) のページを開いてください" },
+  "statusLoading":     { "message": "ページの読み込みが完了していません" },
+
+  "btnDownloadAll": { "message": "すべてダウンロード" },
+  "btnDownloading": { "message": "ダウンロード開始..." },
+  "btnSaveThis":    { "message": "この画像を保存" },
+  "imageCount": {
+    "message": "$COUNT$ 枚",
+    "placeholders": { "count": { "content": "$1", "example": "3" } }
+  },
+  "imageAlt": {
+    "message": "画像 $INDEX$",
+    "placeholders": { "index": { "content": "$1", "example": "1" } }
+  },
+  "shortcutHint":      { "message": "Alt+S: ホバー画像を保存 / Alt+Shift+S: 全画像を保存" },
+  "settingsLinkTitle": { "message": "設定を開く" },
+  "btnSaveImageTitle": { "message": "オリジナル画像を保存 (Alt+S)" },
+
+  "headingSettings":   { "message": "OriginalPicDownloader 設定" },
+  "sectionLanguage": { "message": "表示言語" },
+  "labelLanguage":   { "message": "言語" },
+
+  "sectionFilenaming": { "message": "ファイル命名規則" },
+  "labelPattern":      { "message": "ファイル名パターン" },
+  "patternPlaceholder":{ "message": "{username}_{tweetId}_{index}" },
+  "hintTokens":        { "message": "使用可能なトークン（クリックで挿入）:" },
+  "hintPatternExample":{ "message": "例: <code>{username}_{tweetId}_{index}</code> → <code>john_1234567890_01.jpg</code>" },
+  "labelSaveDir":      { "message": "保存先ディレクトリ" },
+  "saveDirPlaceholder":{ "message": "X-Images" },
+  "hintSaveDir":       { "message": "ダウンロードフォルダからの相対パス。サブディレクトリも指定可 (例: <code>SNS/X</code>)" },
+  "labelPreferFormat": { "message": "保存フォーマット" },
+  "optionOrigFormat":  { "message": "オリジナル形式をそのまま" },
+  "optionJpeg":        { "message": "JPEG に統一" },
+  "optionPng":         { "message": "PNG に統一" },
+
+  "sectionBehavior":   { "message": "動作設定" },
+  "labelShowOverlay":  { "message": "ツイート画像の上にダウンロードボタンを表示する" },
+  "labelAskBeforeSave":{ "message": "保存前に保存先の確認ダイアログを表示する" },
+  "hintAskBeforeSave": { "message": "ON にすると毎回ダイアログが開きます。ブラウザの設定より優先されます。" },
+
+  "sectionShortcuts":    { "message": "ショートカットキー" },
+  "shortcutHoverSave":   { "message": "ホバー中の画像を保存" },
+  "shortcutAllSave":     { "message": "フォーカス中の投稿の全画像を保存" },
+  "shortcutFocusedSave": { "message": "フォーカス中の投稿の画像を保存" },
+  "shortcutPreviewSave": { "message": "プレビュー中の画像を保存" },
+  "shortcutClosePreview":{ "message": "プレビューを閉じる" },
+  "shortcutNote":        { "message": "ショートカットを変更するには <a href=\"chrome://extensions/shortcuts\" target=\"_blank\">chrome://extensions/shortcuts</a> を開いてください。" },
+
+  "btnSaveSettings": { "message": "設定を保存" },
+  "savedMsg":        { "message": "保存しました" },
+  "disclaimer":      { "message": "This extension is an independent, unofficial tool and is not affiliated with, endorsed by, or sponsored by X Corp. or Twitter, Inc." }
+}

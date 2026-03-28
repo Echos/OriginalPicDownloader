@@ -138,9 +138,9 @@
         <circle cx="8.5" cy="8.5" r="1.5"/>
         <polyline points="21 15 16 10 5 21"/>
       </svg>
-      OriginalPicDownloader
+      <span data-i18n="appName">OriginalPicDownloader</span>
     </div>
-    <a id="settings-link" href="options.html" target="_blank" title="設定を開く">
+    <a id="settings-link" href="options.html" target="_blank" data-i18n-title="settingsLinkTitle" title="">
       <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
            fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <circle cx="12" cy="12" r="3"/>
@@ -155,16 +155,17 @@
     </a>
   </header>
 
-  <div id="status-area">ツイートにカーソルを合わせてください</div>
+  <div id="status-area" data-i18n="statusHoverPrompt"></div>
   <div id="image-grid" hidden></div>
 
   <footer id="footer" hidden>
-    <button id="download-all-btn">すべてダウンロード</button>
+    <button id="download-all-btn" data-i18n="btnDownloadAll"></button>
     <span id="image-count"></span>
   </footer>
 
-  <div class="shortcut-hint">Alt+S: ホバー画像を保存 / Alt+Shift+S: 全画像を保存</div>
+  <div class="shortcut-hint" data-i18n="shortcutHint"></div>
 
+  <script src="i18n.js"></script>
   <script src="popup.js"></script>
 </body>
 </html>

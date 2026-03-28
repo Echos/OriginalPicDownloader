@@ -1,0 +1,61 @@
+{
+  "appName":        { "message": "OriginalPicDownloader" },
+  "appDescription": { "message": "Save original-quality images from posts on X (x.com). Not affiliated with X Corp." },
+
+  "cmdDownloadHovered": { "message": "Download hovered or focused tweet image" },
+  "cmdDownloadAll":     { "message": "Download all images in focused post" },
+
+  "statusHoverPrompt": { "message": "Hover over a post with images" },
+  "statusNotXTab":     { "message": "No active X tab" },
+  "statusOpenX":       { "message": "Please open x.com" },
+  "statusLoading":     { "message": "Page not ready yet" },
+
+  "btnDownloadAll": { "message": "Download All" },
+  "btnDownloading": { "message": "Downloading..." },
+  "btnSaveThis":    { "message": "Save this image" },
+  "imageCount": {
+    "message": "$COUNT$ image(s)",
+    "placeholders": { "count": { "content": "$1", "example": "3" } }
+  },
+  "imageAlt": {
+    "message": "Image $INDEX$",
+    "placeholders": { "index": { "content": "$1", "example": "1" } }
+  },
+  "shortcutHint":      { "message": "Alt+S: Save hovered image / Alt+Shift+S: Save all images" },
+  "settingsLinkTitle": { "message": "Open settings" },
+  "btnSaveImageTitle": { "message": "Save original image (Alt+S)" },
+
+  "headingSettings":   { "message": "OriginalPicDownloader Settings" },
+  "sectionLanguage": { "message": "Display Language" },
+  "labelLanguage":   { "message": "Language" },
+
+  "sectionFilenaming": { "message": "File Naming" },
+  "labelPattern":      { "message": "Filename Pattern" },
+  "patternPlaceholder":{ "message": "{username}_{tweetId}_{index}" },
+  "hintTokens":        { "message": "Available tokens (click to insert):" },
+  "hintPatternExample":{ "message": "e.g. <code>{username}_{tweetId}_{index}</code> → <code>john_1234567890_01.jpg</code>" },
+  "labelSaveDir":      { "message": "Save Directory" },
+  "saveDirPlaceholder":{ "message": "X-Images" },
+  "hintSaveDir":       { "message": "Relative path from the Downloads folder. Subdirectories supported (e.g. <code>SNS/X</code>)" },
+  "labelPreferFormat": { "message": "Save Format" },
+  "optionOrigFormat":  { "message": "Keep original format" },
+  "optionJpeg":        { "message": "Convert to JPEG" },
+  "optionPng":         { "message": "Convert to PNG" },
+
+  "sectionBehavior":   { "message": "Behavior" },
+  "labelShowOverlay":  { "message": "Show download button on post images" },
+  "labelAskBeforeSave":{ "message": "Show save dialog before downloading" },
+  "hintAskBeforeSave": { "message": "A dialog will open for each download, overriding browser settings." },
+
+  "sectionShortcuts":    { "message": "Keyboard Shortcuts" },
+  "shortcutHoverSave":   { "message": "Save hovered image" },
+  "shortcutAllSave":     { "message": "Save all images in focused post" },
+  "shortcutFocusedSave": { "message": "Save images in focused post" },
+  "shortcutPreviewSave": { "message": "Save previewed images" },
+  "shortcutClosePreview":{ "message": "Close preview" },
+  "shortcutNote":        { "message": "To change shortcuts, open <a href=\"chrome://extensions/shortcuts\" target=\"_blank\">chrome://extensions/shortcuts</a>." },
+
+  "btnSaveSettings": { "message": "Save Settings" },
+  "savedMsg":        { "message": "Saved" },
+  "disclaimer":      { "message": "This extension is an independent, unofficial tool and is not affiliated with, endorsed by, or sponsored by X Corp. or Twitter, Inc." }
+}

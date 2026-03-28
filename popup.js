@@ -12,24 +12,22 @@ const imageCount = document.getElementById('image-count');
 async function fetchImages() {
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
   if (!tab?.id) {
-    showStatus('X のタブがアクティブではありません');
+    showStatus(t('statusNotXTab'));
     return;
   }
 
-  const isXTab =
-    tab.url?.includes('x.com') || tab.url?.includes('twitter.com');
+  const isXTab = tab.url?.includes('x.com') || tab.url?.includes('twitter.com');
   if (!isXTab) {
-    showStatus('X (Twitter) のページを開いてください');
+    showStatus(t('statusOpenX'));
     return;
   }
 
   chrome.tabs.sendMessage(tab.id, { type: 'GET_CURRENT_IMAGES' }, (response) => {
     if (chrome.runtime.lastError) {
-      showStatus('ページの読み込みが完了していません');
+      showStatus(t('statusLoading'));
       return;
     }
-    const images = response?.images ?? [];
-    renderImages(images);
+    renderImages(response?.images ?? []);
   });
 }
 
@@ -44,7 +42,7 @@ function renderImages(images) {
   currentImages = images;
 
   if (!images.length) {
-    showStatus('ツイートにカーソルを合わせてください');
+    showStatus(t('statusHoverPrompt'));
     return;
   }
 
@@ -52,7 +50,7 @@ function renderImages(images) {
   imageGrid.hidden = false;
   footer.hidden = false;
   imageGrid.innerHTML = '';
-  imageCount.textContent = `${images.length} 枚`;
+  imageCount.textContent = t('imageCount', [images.length.toString()]);
   downloadAllBtn.disabled = false;
 
   images.forEach((imgInfo, idx) => {
@@ -61,12 +59,12 @@ function renderImages(images) {
 
     const img = document.createElement('img');
     img.src = imgInfo.url;
-    img.alt = `画像 ${idx + 1}`;
+    img.alt = t('imageAlt', [(idx + 1).toString()]);
     img.loading = 'lazy';
 
     const btn = document.createElement('button');
     btn.className = 'item-dl-btn';
-    btn.title = 'この画像を保存';
+    btn.title = t('btnSaveThis');
     btn.innerHTML = `
       <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
            fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -88,9 +86,14 @@ function renderImages(images) {
 downloadAllBtn.addEventListener('click', () => {
   if (!currentImages.length) return;
   chrome.runtime.sendMessage({ type: 'START_DOWNLOAD', payload: currentImages });
-  downloadAllBtn.textContent = 'ダウンロード開始...';
+  downloadAllBtn.textContent = t('btnDownloading');
   downloadAllBtn.disabled = true;
   setTimeout(() => window.close(), 800);
 });
 
-fetchImages();
+// i18n 初期化後に描画・データ取得
+(async () => {
+  await i18nInit();
+  applyI18n();
+  fetchImages();
+})();

@@ -1,8 +1,9 @@
 {
   "manifest_version": 3,
-  "name": "OriginalPicDownloader",
+  "name": "__MSG_appName__",
   "version": "1.0.0",
-  "description": "Save original-quality images from posts on X (x.com). Not affiliated with X Corp.",
+  "description": "__MSG_appDescription__",
+  "default_locale": "ja",
 
   "permissions": [
     "downloads",
@@ -36,7 +37,10 @@
     }
   },
 
-  "options_page": "options.html",
+  "options_ui": {
+    "page": "options.html",
+    "open_in_tab": true
+  },
 
   "commands": {
     "download-hovered-image": {
@@ -44,14 +48,14 @@
         "default": "Alt+S",
         "mac": "Alt+S"
       },
-      "description": "Download hovered or focused tweet image"
+      "description": "__MSG_cmdDownloadHovered__"
     },
     "download-all-images-in-post": {
       "suggested_key": {
         "default": "Alt+Shift+S",
         "mac": "Alt+Shift+S"
       },
-      "description": "Download all images in focused post"
+      "description": "__MSG_cmdDownloadAll__"
     }
   },
 
@@ -59,5 +63,12 @@
     "16": "icons/icon16.png",
     "48": "icons/icon48.png",
     "128": "icons/icon128.png"
-  }
+  },
+
+  "web_accessible_resources": [
+    {
+      "resources": ["_locales/*/messages.json"],
+      "matches": ["https://x.com/*", "https://twitter.com/*"]
+    }
+  ]
 }

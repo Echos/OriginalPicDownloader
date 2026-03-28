@@ -14,10 +14,26 @@ const state = {
   },
 };
 
+// 選択言語のメッセージを保持する
+let _csMessages = {};
+
+function csT(key) {
+  return _csMessages[key]?.message || key;
+}
+
+async function loadCsMessages(lang) {
+  try {
+    const url = chrome.runtime.getURL(`_locales/${lang}/messages.json`);
+    const res = await fetch(url);
+    _csMessages = await res.json();
+  } catch (_) {}
+}
+
 // 設定を読み込む
 async function loadSettings() {
-  const s = await chrome.storage.sync.get({ showOverlay: true });
+  const s = await chrome.storage.sync.get({ showOverlay: true, language: 'ja' });
   state.settings = s;
+  await loadCsMessages(s.language || 'ja');
   // showOverlay 変更時にオーバーレイの表示/非表示を切り替え
   document.querySelectorAll(`.${XIV_BTN_CLASS}-wrap`).forEach((el) => {
     el.style.display = s.showOverlay ? '' : 'none';
@@ -100,7 +116,7 @@ function injectOverlay(article) {
 
     const btn = document.createElement('button');
     btn.className = XIV_BTN_CLASS;
-    btn.title = 'オリジナル画像を保存 (Alt+S)';
+    btn.title = csT('btnSaveImageTitle');
     btn.innerHTML = `
       <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -346,7 +362,7 @@ window.addEventListener('popstate', () => {
   state.focusedArticle = null;
 });
 
-// 初期化
-loadSettings();
-// 初期描画済みの article にもオーバーレイを注入
-processNewArticles(document.body);
+// 初期化: 言語ロード完了後に既存 article を処理
+loadSettings().then(() => {
+  processNewArticles(document.body);
+});

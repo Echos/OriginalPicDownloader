@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
   <meta charset="utf-8">
-  <title>OriginalPicDownloader - 設定</title>
+  <title>OriginalPicDownloader</title>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -117,9 +117,9 @@
     }
 
     .token {
-      background: #e8f4fd;
+      background: #eff6ff;
       color: #2563eb;
-      border: 1px solid #b3d9f5;
+      border: 1px solid #bfdbfe;
       border-radius: 4px;
       padding: 2px 8px;
       font-size: 12px;
@@ -128,7 +128,7 @@
       transition: background 0.1s;
     }
 
-    .token:hover { background: #c9e8fb; }
+    .token:hover { background: #dbeafe; }
 
     .actions {
       display: flex;
@@ -197,105 +197,112 @@
       <circle cx="8.5" cy="8.5" r="1.5"/>
       <polyline points="21 15 16 10 5 21"/>
     </svg>
-    OriginalPicDownloader 設定
+    <span data-i18n="headingSettings"></span>
   </h1>
 
   <form id="settings-form">
+    <!-- 表示言語 -->
+    <div class="section">
+      <h2 data-i18n="sectionLanguage"></h2>
+      <div class="field">
+        <label for="language" data-i18n="labelLanguage"></label>
+        <select id="language" name="language">
+          <option value="ja">日本語</option>
+          <option value="en">English</option>
+        </select>
+      </div>
+    </div>
+
     <!-- ファイル命名規則 -->
     <div class="section">
-      <h2>ファイル命名規則</h2>
+      <h2 data-i18n="sectionFilenaming"></h2>
 
       <div class="field">
-        <label for="pattern">ファイル名パターン</label>
-        <input type="text" id="pattern" name="pattern" placeholder="{username}_{tweetId}_{index}">
-        <div class="hint">使用可能なトークン（クリックで挿入）:</div>
+        <label for="pattern" data-i18n="labelPattern"></label>
+        <input type="text" id="pattern" name="pattern" data-i18n-placeholder="patternPlaceholder">
+        <div class="hint" data-i18n="hintTokens"></div>
         <div class="token-list">
           <span class="token" data-token="{username}">{username}</span>
           <span class="token" data-token="{tweetId}">{tweetId}</span>
           <span class="token" data-token="{index}">{index}</span>
           <span class="token" data-token="{timestamp}">{timestamp}</span>
         </div>
-        <div class="hint">例: <code>{username}_{tweetId}_{index}</code> → <code>john_1234567890_01.jpg</code></div>
+        <div class="hint" data-i18n-html="hintPatternExample"></div>
       </div>
 
       <div class="field">
-        <label for="saveDir">保存先ディレクトリ</label>
-        <input type="text" id="saveDir" name="saveDir" placeholder="X-Images">
-        <div class="hint">ダウンロードフォルダからの相対パス。サブディレクトリも指定可 (例: <code>SNS/X</code>)</div>
+        <label for="saveDir" data-i18n="labelSaveDir"></label>
+        <input type="text" id="saveDir" name="saveDir" data-i18n-placeholder="saveDirPlaceholder">
+        <div class="hint" data-i18n-html="hintSaveDir"></div>
       </div>
 
       <div class="field">
-        <label for="preferFormat">保存フォーマット</label>
+        <label for="preferFormat" data-i18n="labelPreferFormat"></label>
         <select id="preferFormat" name="preferFormat">
-          <option value="orig">オリジナル形式をそのまま</option>
-          <option value="jpg">JPEG に統一</option>
-          <option value="png">PNG に統一</option>
+          <option value="orig" data-i18n="optionOrigFormat"></option>
+          <option value="jpg"  data-i18n="optionJpeg"></option>
+          <option value="png"  data-i18n="optionPng"></option>
         </select>
       </div>
     </div>
 
     <!-- 動作設定 -->
     <div class="section">
-      <h2>動作設定</h2>
+      <h2 data-i18n="sectionBehavior"></h2>
 
       <div class="field">
         <label class="checkbox-label">
           <input type="checkbox" id="showOverlay" name="showOverlay">
-          ツイート画像の上にダウンロードボタンを表示する
+          <span data-i18n="labelShowOverlay"></span>
         </label>
       </div>
 
       <div class="field">
         <label class="checkbox-label">
           <input type="checkbox" id="askBeforeSave" name="askBeforeSave">
-          保存前に保存先の確認ダイアログを表示する
+          <span data-i18n="labelAskBeforeSave"></span>
         </label>
-        <div class="hint">ON にすると毎回ダイアログが開きます。ブラウザの設定より優先されます。</div>
+        <div class="hint" data-i18n="hintAskBeforeSave"></div>
       </div>
     </div>
 
     <!-- ショートカットキー -->
     <div class="section">
-      <h2>ショートカットキー</h2>
+      <h2 data-i18n="sectionShortcuts"></h2>
       <table class="shortcut-table">
         <tr>
-          <td>ホバー中の画像を保存</td>
+          <td data-i18n="shortcutHoverSave"></td>
           <td><kbd>Alt</kbd> + <kbd>S</kbd></td>
         </tr>
         <tr>
-          <td>フォーカス中の投稿の全画像を保存</td>
+          <td data-i18n="shortcutAllSave"></td>
           <td><kbd>Alt</kbd> + <kbd>Shift</kbd> + <kbd>S</kbd></td>
         </tr>
         <tr>
-          <td>フォーカス中の投稿の画像を保存</td>
+          <td data-i18n="shortcutFocusedSave"></td>
           <td><kbd>B</kbd></td>
         </tr>
         <tr>
-          <td>プレビュー中の画像を保存</td>
+          <td data-i18n="shortcutPreviewSave"></td>
           <td><kbd>D</kbd></td>
         </tr>
         <tr>
-          <td>プレビューを閉じる</td>
+          <td data-i18n="shortcutClosePreview"></td>
           <td><kbd>Esc</kbd></td>
         </tr>
       </table>
-      <p class="shortcut-note">
-        ショートカットを変更するには
-        <a href="chrome://extensions/shortcuts" target="_blank">chrome://extensions/shortcuts</a>
-        を開いてください。
-      </p>
+      <p class="shortcut-note" data-i18n-html="shortcutNote"></p>
     </div>
 
     <div class="actions">
-      <button type="submit">設定を保存</button>
-      <span id="saved-msg" hidden>保存しました</span>
+      <button type="submit" data-i18n="btnSaveSettings"></button>
+      <span id="saved-msg" hidden data-i18n="savedMsg"></span>
     </div>
   </form>
 
-  <p style="margin-top:24px;font-size:11px;color:#aaa;line-height:1.6;">
-    This extension is an independent, unofficial tool and is not affiliated with, endorsed by, or sponsored by X Corp. or Twitter, Inc.
-  </p>
+  <p style="margin-top:24px;font-size:11px;color:#aaa;line-height:1.6;" data-i18n="disclaimer"></p>
 
+  <script src="i18n.js"></script>
   <script src="options.js"></script>
 </body>
 </html>

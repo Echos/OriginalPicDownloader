@@ -13,13 +13,16 @@ const savedMsg = document.getElementById('saved-msg');
 
 // 設定をフォームに反映する
 async function loadSettings() {
-  const settings = await chrome.storage.sync.get(DEFAULT_SETTINGS);
+  const settings = await chrome.storage.sync.get({ ...DEFAULT_SETTINGS, language: DEFAULT_LANG });
 
   document.getElementById('pattern').value = settings.pattern;
   document.getElementById('saveDir').value = settings.saveDir;
   document.getElementById('preferFormat').value = settings.preferFormat;
   document.getElementById('showOverlay').checked = settings.showOverlay;
   document.getElementById('askBeforeSave').checked = settings.askBeforeSave;
+  document.getElementById('language').value = SUPPORTED_LANGS.includes(settings.language)
+    ? settings.language
+    : DEFAULT_LANG;
 }
 
 // フォームの値を保存する
@@ -32,6 +35,7 @@ form.addEventListener('submit', async (e) => {
     preferFormat: document.getElementById('preferFormat').value,
     showOverlay: document.getElementById('showOverlay').checked,
     askBeforeSave: document.getElementById('askBeforeSave').checked,
+    language: document.getElementById('language').value,
   };
 
   await chrome.storage.sync.set(settings);
@@ -44,9 +48,13 @@ form.addEventListener('submit', async (e) => {
 
   // 保存完了メッセージを表示
   savedMsg.hidden = false;
-  setTimeout(() => {
-    savedMsg.hidden = true;
-  }, 2000);
+  setTimeout(() => { savedMsg.hidden = true; }, 2000);
+});
+
+// 言語セレクタ変更時に即時リロードして反映
+document.getElementById('language').addEventListener('change', async (e) => {
+  await chrome.storage.sync.set({ language: e.target.value });
+  location.reload();
 });
 
 // トークンクリックでカーソル位置に挿入する
@@ -62,4 +70,9 @@ document.querySelectorAll('.token').forEach((token) => {
   });
 });
 
-loadSettings();
+// i18n 初期化後に描画・設定ロード
+(async () => {
+  await i18nInit();
+  applyI18n();
+  await loadSettings();
+})();
