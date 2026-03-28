@@ -164,19 +164,15 @@
     <tbody>
       <tr>
         <td><code>downloads</code></td>
-        <td>画像をローカルディスクに保存するため</td>
+        <td>画像ファイルをユーザーのローカルディスクに保存するため（<code>chrome.downloads.download()</code> の呼び出しに必須）</td>
       </tr>
       <tr>
         <td><code>storage</code></td>
-        <td>ユーザー設定を保存・同期するため</td>
-      </tr>
-      <tr>
-        <td><code>activeTab</code></td>
-        <td>ポップアップ操作時にアクティブタブの情報を取得するため</td>
+        <td>ファイル名パターン・保存先・表示言語などのユーザー設定を端末に保存・同期するため</td>
       </tr>
       <tr>
         <td>ホスト権限 (x.com / twitter.com)</td>
-        <td>ページ上に画像ダウンロードボタンを表示するため</td>
+        <td>これらのページにコンテンツスクリプトを注入し、投稿画像の検出・ダウンロード UI の表示を行うため</td>
       </tr>
     </tbody>
   </table>
@@ -239,19 +235,15 @@
     <tbody>
       <tr>
         <td><code>downloads</code></td>
-        <td>To save images to the local disk</td>
+        <td>Required to save image files to the user's local disk via <code>chrome.downloads.download()</code></td>
       </tr>
       <tr>
         <td><code>storage</code></td>
-        <td>To save and sync user settings</td>
-      </tr>
-      <tr>
-        <td><code>activeTab</code></td>
-        <td>To access the active tab when the popup is opened</td>
+        <td>Required to persist and sync user preferences such as filename pattern, save directory, and display language</td>
       </tr>
       <tr>
         <td>Host permissions (x.com / twitter.com)</td>
-        <td>To inject the download button UI on post images</td>
+        <td>Required to inject a content script into these pages to detect post images and display the download UI</td>
       </tr>
     </tbody>
   </table>
