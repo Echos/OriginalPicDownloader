@@ -1,0 +1,77 @@
+================================================================
+  OriginalPicDownloader - Chrome Web Store 説明文案
+================================================================
+
+----------------------------------------------------------------
+【日本語】
+----------------------------------------------------------------
+
+■ 短い説明文（132文字以内）
+
+X (x.com) の投稿画像をオリジナル画質でかんたん保存。クリックまたはショートカットキーで即座にダウンロード。ファイル名パターンもカスタマイズ可能。
+
+
+■ 詳細説明文
+
+X (x.com / Twitter) のタイムラインに表示される画像を、圧縮なしのオリジナル画質でダウンロードできる拡張機能です。
+
+【主な機能】
+- 画像をクリックするとオリジナル画像をオーバーレイ表示
+- 複数画像の投稿は全画像を並べてプレビュー・一括ダウンロード
+- 各画像にホバーするだけで表示されるダウンロードボタン
+- ファイル名パターンを自由にカスタマイズ（例: {username}_{tweetId}_{index}）
+- 保存フォーマットを選択（オリジナル / JPEG / PNG）
+- 表示言語を切り替え可能（日本語 / English）
+
+【キーボードショートカット】
+- Alt+S         ホバー中の画像を保存
+- Alt+Shift+S   投稿の全画像を保存
+- B             フォーカス中の投稿の画像を保存
+- D             プレビュー中の画像を保存
+- Esc           プレビューを閉じる
+
+このツールは X Corp. および Twitter, Inc. とは無関係の独立した非公式ツールです。
+
+
+----------------------------------------------------------------
+【English】
+----------------------------------------------------------------
+
+■ Short description (up to 132 characters)
+
+Save original-quality images from X (x.com) posts with one click or a keyboard shortcut. Customizable filenames included.
+
+
+■ Detailed description
+
+Download full-resolution, uncompressed images from X (x.com / Twitter) timeline posts with ease.
+
+Features:
+- Click any post image to preview it full-screen at original quality
+- Preview and batch-download multiple images side by side
+- Hover download button appears directly on each image
+- Fully customizable filename pattern (e.g. {username}_{tweetId}_{index})
+- Choose save format: original / JPEG / PNG
+- Switch display language between Japanese and English
+
+Keyboard Shortcuts:
+- Alt+S           Save hovered image
+- Alt+Shift+S     Save all images in focused post
+- B               Save images in focused post
+- D               Save previewed images
+- Esc             Close preview
+
+This is an independent, unofficial tool not affiliated with, endorsed by, or sponsored by X Corp. or Twitter, Inc.
+
+
+================================================================
+  カテゴリ / Category
+================================================================
+
+推奨: Productivity または Photos
+
+================================================================
+  プライバシーポリシー URL
+================================================================
+
+https://echos.github.io/OriginalPicDownloader/privacy.html

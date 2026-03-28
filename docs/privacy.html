@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Privacy Policy – OriginalPicDownloader</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      font-size: 16px;
+      line-height: 1.75;
+      color: #1a1a1a;
+      background: #f7f9fa;
+      padding: 40px 20px;
+    }
+
+    .container {
+      max-width: 760px;
+      margin: 0 auto;
+      background: #fff;
+      border: 1px solid #e1e4e8;
+      border-radius: 12px;
+      padding: 48px 56px;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 32px;
+      font-size: 20px;
+      font-weight: 700;
+    }
+
+    .logo svg { flex-shrink: 0; }
+
+    h1 {
+      font-size: 28px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .meta {
+      font-size: 13px;
+      color: #888;
+      margin-bottom: 40px;
+    }
+
+    h2 {
+      font-size: 17px;
+      font-weight: 700;
+      margin: 36px 0 10px;
+      padding-bottom: 6px;
+      border-bottom: 1px solid #e1e4e8;
+    }
+
+    p { margin-bottom: 12px; }
+
+    ul {
+      padding-left: 20px;
+      margin-bottom: 12px;
+    }
+
+    li { margin-bottom: 6px; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+      margin-bottom: 12px;
+    }
+
+    th, td {
+      text-align: left;
+      padding: 8px 12px;
+      border: 1px solid #e1e4e8;
+    }
+
+    th {
+      background: #f7f9fa;
+      font-weight: 600;
+    }
+
+    a { color: #2563eb; }
+
+    .lang-divider {
+      margin: 56px 0;
+      border: none;
+      border-top: 2px dashed #e1e4e8;
+    }
+
+    .lang-badge {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      background: #eff6ff;
+      color: #2563eb;
+      border: 1px solid #bfdbfe;
+      border-radius: 4px;
+      padding: 2px 8px;
+      margin-bottom: 16px;
+    }
+
+    @media (max-width: 600px) {
+      .container { padding: 28px 20px; }
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+
+  <div class="logo">
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+         fill="none" stroke="#2563eb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="3" y="3" width="18" height="18" rx="2"/>
+      <circle cx="8.5" cy="8.5" r="1.5"/>
+      <polyline points="21 15 16 10 5 21"/>
+    </svg>
+    OriginalPicDownloader
+  </div>
+
+  <!-- ========== 日本語 ========== -->
+  <div class="lang-badge">日本語</div>
+
+  <h1>プライバシーポリシー</h1>
+  <p class="meta">最終更新日: 2026年3月29日</p>
+
+  <h2>1. 概要</h2>
+  <p>
+    OriginalPicDownloader（以下「本拡張機能」）は、X (x.com) のタイムライン上の画像を
+    オリジナル画質でダウンロードするための Chrome 拡張機能です。
+    本拡張機能は、ユーザーの個人情報を一切収集・送信しません。
+  </p>
+
+  <h2>2. 収集するデータ</h2>
+  <p>本拡張機能は外部サーバーへデータを送信しません。保存するデータは以下のみです。</p>
+  <table>
+    <thead>
+      <tr>
+        <th>データ</th>
+        <th>保存場所</th>
+        <th>用途</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>ユーザー設定（ファイル名パターン・保存先・言語など）</td>
+        <td>chrome.storage.sync（端末内のみ）</td>
+        <td>設定の保持・同期</td>
+      </tr>
+    </tbody>
+  </table>
+  <p>画像の URL や閲覧履歴、個人情報は一切記録・送信しません。</p>
+
+  <h2>3. 使用する権限</h2>
+  <table>
+    <thead>
+      <tr><th>権限</th><th>用途</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><code>downloads</code></td>
+        <td>画像をローカルディスクに保存するため</td>
+      </tr>
+      <tr>
+        <td><code>storage</code></td>
+        <td>ユーザー設定を保存・同期するため</td>
+      </tr>
+      <tr>
+        <td><code>activeTab</code></td>
+        <td>ポップアップ操作時にアクティブタブの情報を取得するため</td>
+      </tr>
+      <tr>
+        <td>ホスト権限 (x.com / twitter.com)</td>
+        <td>ページ上に画像ダウンロードボタンを表示するため</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>4. 第三者への情報提供</h2>
+  <p>本拡張機能は、いかなる第三者にもデータを提供・販売・共有しません。</p>
+
+  <h2>5. 免責事項</h2>
+  <p>
+    本拡張機能は X Corp. および Twitter, Inc. とは無関係の独立したツールです。
+    X のサービス利用にあたっては
+    <a href="https://twitter.com/ja/tos" target="_blank" rel="noopener">X 利用規約</a>
+    に従ってください。
+  </p>
+
+  <h2>6. お問い合わせ</h2>
+  <p>
+    プライバシーに関するご質問は
+    <a href="https://github.com/Echos/OriginalPicDownloader/issues" target="_blank" rel="noopener">
+      GitHub Issues
+    </a>
+    よりお寄せください。
+  </p>
+
+  <hr class="lang-divider">
+
+  <!-- ========== English ========== -->
+  <div class="lang-badge">English</div>
+
+  <h1>Privacy Policy</h1>
+  <p class="meta">Last updated: March 29, 2026</p>
+
+  <h2>1. Overview</h2>
+  <p>
+    OriginalPicDownloader is a Chrome extension that downloads original-quality images
+    from X (x.com) posts. This extension does not collect or transmit any personal information.
+  </p>
+
+  <h2>2. Data Collected</h2>
+  <p>No data is sent to any external server. The only data stored is:</p>
+  <table>
+    <thead>
+      <tr><th>Data</th><th>Storage</th><th>Purpose</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>User settings (filename pattern, save directory, language, etc.)</td>
+        <td>chrome.storage.sync (local device only)</td>
+        <td>Persisting and syncing preferences</td>
+      </tr>
+    </tbody>
+  </table>
+  <p>No image URLs, browsing history, or personal information is recorded or transmitted.</p>
+
+  <h2>3. Permissions Used</h2>
+  <table>
+    <thead>
+      <tr><th>Permission</th><th>Purpose</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><code>downloads</code></td>
+        <td>To save images to the local disk</td>
+      </tr>
+      <tr>
+        <td><code>storage</code></td>
+        <td>To save and sync user settings</td>
+      </tr>
+      <tr>
+        <td><code>activeTab</code></td>
+        <td>To access the active tab when the popup is opened</td>
+      </tr>
+      <tr>
+        <td>Host permissions (x.com / twitter.com)</td>
+        <td>To inject the download button UI on post images</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>4. Data Sharing</h2>
+  <p>This extension does not sell, share, or provide any data to third parties.</p>
+
+  <h2>5. Disclaimer</h2>
+  <p>
+    This is an independent, unofficial tool not affiliated with, endorsed by, or sponsored by
+    X Corp. or Twitter, Inc. Please comply with the
+    <a href="https://twitter.com/en/tos" target="_blank" rel="noopener">X Terms of Service</a>
+    when using this extension.
+  </p>
+
+  <h2>6. Contact</h2>
+  <p>
+    For privacy-related inquiries, please open an issue on
+    <a href="https://github.com/Echos/OriginalPicDownloader/issues" target="_blank" rel="noopener">
+      GitHub Issues
+    </a>.
+  </p>
+
+</div>
+</body>
+</html>
