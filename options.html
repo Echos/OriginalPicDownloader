@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <title>OriginalPicDownloader - 設定</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      font-size: 14px;
+      background: #f7f9fa;
+      color: #1a1a1a;
+      padding: 32px;
+      min-width: 480px;
+      max-width: 640px;
+    }
+
+    h1 {
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 24px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    h1 svg { flex-shrink: 0; }
+
+    .section {
+      background: #fff;
+      border: 1px solid #e1e4e8;
+      border-radius: 10px;
+      padding: 20px 24px;
+      margin-bottom: 16px;
+    }
+
+    .section h2 {
+      font-size: 13px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: #666;
+      margin-bottom: 16px;
+    }
+
+    .field {
+      margin-bottom: 16px;
+    }
+
+    .field:last-child { margin-bottom: 0; }
+
+    label {
+      display: block;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .hint {
+      font-size: 12px;
+      color: #777;
+      margin-top: 4px;
+    }
+
+    input[type="text"] {
+      width: 100%;
+      padding: 8px 10px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 14px;
+      font-family: 'Consolas', 'Menlo', monospace;
+      background: #fafafa;
+      transition: border-color 0.15s;
+    }
+
+    input[type="text"]:focus {
+      outline: none;
+      border-color: #2563eb;
+      background: #fff;
+    }
+
+    .checkbox-label {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 500;
+      cursor: pointer;
+    }
+
+    input[type="checkbox"] {
+      width: 16px;
+      height: 16px;
+      cursor: pointer;
+      accent-color: #2563eb;
+    }
+
+    select {
+      padding: 8px 10px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 14px;
+      background: #fafafa;
+      cursor: pointer;
+      min-width: 200px;
+    }
+
+    select:focus {
+      outline: none;
+      border-color: #2563eb;
+    }
+
+    .token-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 6px;
+    }
+
+    .token {
+      background: #e8f4fd;
+      color: #2563eb;
+      border: 1px solid #b3d9f5;
+      border-radius: 4px;
+      padding: 2px 8px;
+      font-size: 12px;
+      font-family: 'Consolas', 'Menlo', monospace;
+      cursor: pointer;
+      transition: background 0.1s;
+    }
+
+    .token:hover { background: #c9e8fb; }
+
+    .actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-top: 8px;
+    }
+
+    button[type="submit"] {
+      padding: 9px 24px;
+      background: #2563eb;
+      color: #fff;
+      border: none;
+      border-radius: 9999px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    button[type="submit"]:hover { background: #1d55d4; }
+
+    #saved-msg {
+      font-size: 13px;
+      color: #00a550;
+      font-weight: 600;
+    }
+
+    .shortcut-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    .shortcut-table td {
+      padding: 6px 4px;
+      vertical-align: middle;
+    }
+
+    .shortcut-table td:first-child { color: #555; }
+
+    kbd {
+      background: #f0f0f0;
+      border: 1px solid #ccc;
+      border-bottom-width: 2px;
+      border-radius: 4px;
+      padding: 2px 8px;
+      font-family: 'Consolas', 'Menlo', monospace;
+      font-size: 12px;
+    }
+
+    .shortcut-note {
+      font-size: 12px;
+      color: #888;
+      margin-top: 8px;
+    }
+
+    .shortcut-note a { color: #2563eb; }
+  </style>
+</head>
+<body>
+  <h1>
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+         fill="none" stroke="#2563eb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="3" y="3" width="18" height="18" rx="2"/>
+      <circle cx="8.5" cy="8.5" r="1.5"/>
+      <polyline points="21 15 16 10 5 21"/>
+    </svg>
+    OriginalPicDownloader 設定
+  </h1>
+
+  <form id="settings-form">
+    <!-- ファイル命名規則 -->
+    <div class="section">
+      <h2>ファイル命名規則</h2>
+
+      <div class="field">
+        <label for="pattern">ファイル名パターン</label>
+        <input type="text" id="pattern" name="pattern" placeholder="{username}_{tweetId}_{index}">
+        <div class="hint">使用可能なトークン（クリックで挿入）:</div>
+        <div class="token-list">
+          <span class="token" data-token="{username}">{username}</span>
+          <span class="token" data-token="{tweetId}">{tweetId}</span>
+          <span class="token" data-token="{index}">{index}</span>
+          <span class="token" data-token="{timestamp}">{timestamp}</span>
+        </div>
+        <div class="hint">例: <code>{username}_{tweetId}_{index}</code> → <code>john_1234567890_01.jpg</code></div>
+      </div>
+
+      <div class="field">
+        <label for="saveDir">保存先ディレクトリ</label>
+        <input type="text" id="saveDir" name="saveDir" placeholder="X-Images">
+        <div class="hint">ダウンロードフォルダからの相対パス。サブディレクトリも指定可 (例: <code>SNS/X</code>)</div>
+      </div>
+
+      <div class="field">
+        <label for="preferFormat">保存フォーマット</label>
+        <select id="preferFormat" name="preferFormat">
+          <option value="orig">オリジナル形式をそのまま</option>
+          <option value="jpg">JPEG に統一</option>
+          <option value="png">PNG に統一</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- 動作設定 -->
+    <div class="section">
+      <h2>動作設定</h2>
+
+      <div class="field">
+        <label class="checkbox-label">
+          <input type="checkbox" id="showOverlay" name="showOverlay">
+          ツイート画像の上にダウンロードボタンを表示する
+        </label>
+      </div>
+
+      <div class="field">
+        <label class="checkbox-label">
+          <input type="checkbox" id="askBeforeSave" name="askBeforeSave">
+          保存前に保存先の確認ダイアログを表示する
+        </label>
+        <div class="hint">ON にすると毎回ダイアログが開きます。ブラウザの設定より優先されます。</div>
+      </div>
+    </div>
+
+    <!-- ショートカットキー -->
+    <div class="section">
+      <h2>ショートカットキー</h2>
+      <table class="shortcut-table">
+        <tr>
+          <td>ホバー中の画像を保存</td>
+          <td><kbd>Alt</kbd> + <kbd>S</kbd></td>
+        </tr>
+        <tr>
+          <td>フォーカス中の投稿の全画像を保存</td>
+          <td><kbd>Alt</kbd> + <kbd>Shift</kbd> + <kbd>S</kbd></td>
+        </tr>
+        <tr>
+          <td>フォーカス中の投稿の画像を保存</td>
+          <td><kbd>B</kbd></td>
+        </tr>
+        <tr>
+          <td>プレビュー中の画像を保存</td>
+          <td><kbd>D</kbd></td>
+        </tr>
+        <tr>
+          <td>プレビューを閉じる</td>
+          <td><kbd>Esc</kbd></td>
+        </tr>
+      </table>
+      <p class="shortcut-note">
+        ショートカットを変更するには
+        <a href="chrome://extensions/shortcuts" target="_blank">chrome://extensions/shortcuts</a>
+        を開いてください。
+      </p>
+    </div>
+
+    <div class="actions">
+      <button type="submit">設定を保存</button>
+      <span id="saved-msg" hidden>保存しました</span>
+    </div>
+  </form>
+
+  <p style="margin-top:24px;font-size:11px;color:#aaa;line-height:1.6;">
+    This extension is an independent, unofficial tool and is not affiliated with, endorsed by, or sponsored by X Corp. or Twitter, Inc.
+  </p>
+
+  <script src="options.js"></script>
+</body>
+</html>
