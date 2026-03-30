@@ -315,16 +315,16 @@ document.addEventListener('keydown', (e) => {
 
   if (isTyping()) return;
 
-  if (e.key === 'd' && overlayOpen) {
-    chrome.runtime.sendMessage({ type: 'START_DOWNLOAD', payload: overlayImages });
-    return;
-  }
-  if (e.key === 'b') {
-    const article = state.focusedArticle;
-    if (!article) return;
-    const images = collectImages(article);
-    if (images.length > 0) {
-      chrome.runtime.sendMessage({ type: 'START_DOWNLOAD', payload: images });
+  if (e.key === 'd') {
+    if (overlayOpen) {
+      chrome.runtime.sendMessage({ type: 'START_DOWNLOAD', payload: overlayImages });
+    } else {
+      const article = state.focusedArticle;
+      if (!article) return;
+      const images = collectImages(article);
+      if (images.length > 0) {
+        chrome.runtime.sendMessage({ type: 'START_DOWNLOAD', payload: images });
+      }
     }
   }
 }, { capture: true });
