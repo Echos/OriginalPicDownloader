@@ -168,15 +168,18 @@ function injectOverlay(article) {
 // ============================================================
 const XIV_OVERLAY_ID = 'xiv-preview-overlay';
 let overlayImages = [];
+let currentOverlayIndex = 0;
 
-function showImageOverlay(images) {
-  // 既存オーバーレイを削除してから画像リストをセット
-  closeImageOverlay();
-  overlayImages = images;
+function renderOverlay() {
+  document.getElementById(XIV_OVERLAY_ID)?.remove();
+
+  const images = overlayImages;
+  const index = currentOverlayIndex;
+  const imgInfo = images[index];
+  const isMultiple = images.length > 1;
 
   const overlay = document.createElement('div');
   overlay.id = XIV_OVERLAY_ID;
-  const isMultiple = images.length > 1;
   overlay.style.cssText = `
     position: fixed;
     inset: 0;
@@ -185,37 +188,106 @@ function showImageOverlay(images) {
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: ${isMultiple ? 'flex-start' : 'center'};
-    gap: 12px;
+    justify-content: center;
     padding: 20px;
     box-sizing: border-box;
-    overflow-y: ${isMultiple ? 'auto' : 'hidden'};
+    overflow: hidden;
     cursor: zoom-out;
   `;
 
-  images.forEach((imgInfo) => {
-    const img = document.createElement('img');
-    img.src = imgInfo.url;
-    img.style.cssText = `
-      max-height: ${isMultiple ? '80vh' : '90vh'};
-      max-width: 90vw;
-      object-fit: contain;
-      border-radius: 4px;
-      cursor: default;
-      box-shadow: 0 4px 24px rgba(0,0,0,0.6);
-      flex-shrink: 0;
+  const img = document.createElement('img');
+  img.src = imgInfo.url;
+  img.style.cssText = `
+    max-height: 90vh;
+    max-width: 90vw;
+    object-fit: contain;
+    border-radius: 4px;
+    cursor: default;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.6);
+  `;
+  img.addEventListener('click', (e) => e.stopPropagation());
+  overlay.appendChild(img);
+
+  if (isMultiple) {
+    // 画像カウンター
+    const counter = document.createElement('div');
+    counter.style.cssText = `
+      position: absolute;
+      top: 16px;
+      left: 50%;
+      transform: translateX(-50%);
+      color: #fff;
+      font-size: 14px;
+      background: rgba(0,0,0,0.5);
+      padding: 4px 12px;
+      border-radius: 12px;
+      pointer-events: none;
+      user-select: none;
     `;
-    img.addEventListener('click', (e) => e.stopPropagation());
-    overlay.appendChild(img);
-  });
+    counter.textContent = `${index + 1} / ${images.length}`;
+    overlay.appendChild(counter);
+
+    // ドットインジケーター
+    const dots = document.createElement('div');
+    dots.style.cssText = `
+      position: absolute;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 8px;
+      pointer-events: none;
+    `;
+    images.forEach((_, i) => {
+      const dot = document.createElement('div');
+      dot.style.cssText = `
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: ${i === index ? '#fff' : 'rgba(255,255,255,0.4)'};
+      `;
+      dots.appendChild(dot);
+    });
+    overlay.appendChild(dots);
+
+    // キーヒント
+    const hint = document.createElement('div');
+    hint.style.cssText = `
+      position: absolute;
+      bottom: 44px;
+      left: 50%;
+      transform: translateX(-50%);
+      color: rgba(255,255,255,0.5);
+      font-size: 12px;
+      pointer-events: none;
+      user-select: none;
+      white-space: nowrap;
+    `;
+    hint.textContent = 'j: 次の画像  k: 前の画像';
+    overlay.appendChild(hint);
+  }
 
   overlay.addEventListener('click', closeImageOverlay);
   document.body.appendChild(overlay);
 }
 
+function showImageOverlay(images, startIndex = 0) {
+  closeImageOverlay();
+  overlayImages = images;
+  currentOverlayIndex = startIndex;
+  renderOverlay();
+}
+
+function navigateOverlay(delta) {
+  if (!document.getElementById(XIV_OVERLAY_ID) || overlayImages.length <= 1) return;
+  currentOverlayIndex = (currentOverlayIndex + delta + overlayImages.length) % overlayImages.length;
+  renderOverlay();
+}
+
 function closeImageOverlay() {
   document.getElementById(XIV_OVERLAY_ID)?.remove();
   overlayImages = [];
+  currentOverlayIndex = 0;
 }
 
 function isTyping() {
@@ -226,24 +298,36 @@ function isTyping() {
 }
 
 document.addEventListener('keydown', (e) => {
+  const overlayOpen = !!document.getElementById(XIV_OVERLAY_ID);
+
   if (e.key === 'Escape') {
     closeImageOverlay();
     return;
   }
-  if (isTyping()) return;
-  if (e.key === 'd' && document.getElementById(XIV_OVERLAY_ID)) {
-    chrome.runtime.sendMessage({ type: 'START_DOWNLOAD', payload: overlayImages });
+
+  // オーバーレイ表示中はj/kのデフォルト動作（Xのスクロール）を防止
+  if (overlayOpen && (e.key === 'j' || e.key === 'k')) {
+    e.preventDefault();
+    e.stopPropagation();
+    navigateOverlay(e.key === 'j' ? 1 : -1);
     return;
   }
-  if (e.key === 'b') {
-    const article = state.focusedArticle;
-    if (!article) return;
-    const images = collectImages(article);
-    if (images.length > 0) {
-      chrome.runtime.sendMessage({ type: 'START_DOWNLOAD', payload: images });
+
+  if (isTyping()) return;
+
+  if (e.key === 'd') {
+    if (overlayOpen) {
+      chrome.runtime.sendMessage({ type: 'START_DOWNLOAD', payload: overlayImages });
+    } else {
+      const article = state.focusedArticle;
+      if (!article) return;
+      const images = collectImages(article);
+      if (images.length > 0) {
+        chrome.runtime.sendMessage({ type: 'START_DOWNLOAD', payload: images });
+      }
     }
   }
-});
+}, { capture: true });
 
 // documentレベルのキャプチャでXのリスナーより先に処理する
 document.addEventListener('click', (e) => {
@@ -263,7 +347,12 @@ document.addEventListener('click', (e) => {
   e.stopImmediatePropagation();
 
   const images = collectImages(article);
-  if (images.length > 0) showImageOverlay(images);
+  if (images.length === 0) return;
+
+  // クリックした画像のインデックスを特定して初期表示位置に使う
+  const photoContainers = [...article.querySelectorAll('div[data-testid="tweetPhoto"]')];
+  const clickedIndex = photoContainers.indexOf(container);
+  showImageOverlay(images, clickedIndex >= 0 ? clickedIndex : 0);
 }, { capture: true });
 
 // ============================================================
