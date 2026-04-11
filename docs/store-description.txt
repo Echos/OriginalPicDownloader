@@ -18,16 +18,19 @@ X (x.com / Twitter) のタイムラインに表示される画像を、圧縮な
 【主な機能】
 - 画像をクリックするとオリジナル画像をオーバーレイ表示
 - 複数画像の投稿は全画像を並べてプレビュー・一括ダウンロード
+- j/k キーでオーバーレイ内の画像をスムーズに切り替え
 - 各画像にホバーするだけで表示されるダウンロードボタン
 - ファイル名パターンを自由にカスタマイズ（例: {username}_{tweetId}_{index}）
 - 保存フォーマットを選択（オリジナル / JPEG / PNG）
 - 表示言語を切り替え可能（日本語 / English）
+- 動画・GIF には干渉せず、静止画のみに動作
 
 【キーボードショートカット】
 - Alt+S         ホバー中の画像を保存
 - Alt+Shift+S   投稿の全画像を保存
-- B             フォーカス中の投稿の画像を保存
 - D             プレビュー中の画像を保存
+- J             次の画像へ（オーバーレイ表示中）
+- K             前の画像へ（オーバーレイ表示中）
 - Esc           プレビューを閉じる
 
 このツールは X Corp. および Twitter, Inc. とは無関係の独立した非公式ツールです。
@@ -49,16 +52,19 @@ Download full-resolution, uncompressed images from X (x.com / Twitter) timeline 
 Features:
 - Click any post image to preview it full-screen at original quality
 - Preview and batch-download multiple images side by side
+- Navigate between images using j/k keys in the overlay
 - Hover download button appears directly on each image
 - Fully customizable filename pattern (e.g. {username}_{tweetId}_{index})
 - Choose save format: original / JPEG / PNG
 - Switch display language between Japanese and English
+- Works on still images only — videos and GIFs are never interrupted
 
 Keyboard Shortcuts:
 - Alt+S           Save hovered image
 - Alt+Shift+S     Save all images in focused post
-- B               Save images in focused post
 - D               Save previewed images
+- J               Next image (while overlay is open)
+- K               Previous image (while overlay is open)
 - Esc             Close preview
 
 This is an independent, unofficial tool not affiliated with, endorsed by, or sponsored by X Corp. or Twitter, Inc.
@@ -75,3 +81,24 @@ This is an independent, unofficial tool not affiliated with, endorsed by, or spo
 ================================================================
 
 https://echos.github.io/OriginalPicDownloader/privacy.html
+
+
+================================================================
+  バージョン履歴 / Version History
+================================================================
+
+v1.0.1 (2026-04-11)
+  - 動画・GIF コンテナへの干渉を修正（<video> 要素を含むコンテナはオーバーレイ注入・クリック横取りの対象外）
+  - 複数画像オーバーレイに j/k キーナビゲーションを追加
+  - オーバーレイ表示中/非表示で d キーのダウンロード処理を統合
+  - Ko-fi サポートボタンをポップアップに追加
+  - 不要な activeTab パーミッションを削除
+
+v1.0.0 (2026-03-29)
+  - 初回リリース
+  - i18n 対応（日本語 / English）
+  - 画像クリックでオリジナル画質オーバーレイ表示
+  - ホバーダウンロードボタン
+  - Alt+S / Alt+Shift+S ショートカット
+  - ファイル名パターンのカスタマイズ
+  - 保存フォーマット選択（オリジナル / JPEG / PNG）
