@@ -73,12 +73,19 @@ function extractTweetInfo(article) {
   return { username: 'unknown', tweetId: Date.now().toString() };
 }
 
+// tweetPhoto コンテナが動画（GIF含む）を含むか判定する
+function isVideoContainer(container) {
+  return container.querySelector('video') !== null;
+}
+
 // article 内の全画像情報を収集する
 function collectImages(article) {
   const info = extractTweetInfo(article);
   const imgs = [];
 
   article.querySelectorAll('div[data-testid="tweetPhoto"] img').forEach((img) => {
+    const container = img.closest('div[data-testid="tweetPhoto"]');
+    if (container && isVideoContainer(container)) return;
     const orig = toOriginalUrl(img.src || img.currentSrc || '');
     if (orig && orig.includes('pbs.twimg.com')) {
       imgs.push({ url: orig, username: info.username, tweetId: info.tweetId });
@@ -97,6 +104,8 @@ function injectOverlay(article) {
 
   const photoContainers = article.querySelectorAll('div[data-testid="tweetPhoto"]');
   photoContainers.forEach((container, idx) => {
+    // 動画コンテナにはオーバーレイを注入しない
+    if (isVideoContainer(container)) return;
     // コンテナが既に position: relative でなければ設定
     const cs = getComputedStyle(container);
     if (cs.position === 'static') {
@@ -338,6 +347,9 @@ document.addEventListener('click', (e) => {
 
   const container = e.target.closest('div[data-testid="tweetPhoto"]');
   if (!container) return;
+
+  // 動画コンテナのクリックは横取りしない
+  if (isVideoContainer(container)) return;
 
   const article = e.target.closest('article[data-testid="tweet"]');
   if (!article) return;
