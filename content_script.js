@@ -324,6 +324,17 @@ document.addEventListener('keydown', (e) => {
 
   if (isTyping()) return;
 
+  if (e.key === 'a' && !overlayOpen) {
+    const article = state.focusedArticle;
+    if (!article) return;
+    const containers = [...article.querySelectorAll('div[data-testid="tweetPhoto"]')];
+    const firstContainer = containers.find((c) => !isVideoContainer(c));
+    if (!firstContainer) return;
+    const img = firstContainer.querySelector('img');
+    if (img) img.click();
+    return;
+  }
+
   if (e.key === 'd') {
     if (overlayOpen) {
       chrome.runtime.sendMessage({ type: 'START_DOWNLOAD', payload: overlayImages });

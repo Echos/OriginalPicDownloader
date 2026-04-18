@@ -28,6 +28,7 @@ X (x.com / Twitter) のタイムラインに表示される画像を、圧縮な
 【キーボードショートカット】
 - Alt+S         ホバー中の画像を保存
 - Alt+Shift+S   投稿の全画像を保存
+- A             フォーカス中の投稿画像をプレビュー表示
 - D             プレビュー中の画像を保存
 - J             次の画像へ（オーバーレイ表示中）
 - K             前の画像へ（オーバーレイ表示中）
@@ -62,6 +63,7 @@ Features:
 Keyboard Shortcuts:
 - Alt+S           Save hovered image
 - Alt+Shift+S     Save all images in focused post
+- A               Preview image in focused post
 - D               Save previewed images
 - J               Next image (while overlay is open)
 - K               Previous image (while overlay is open)
@@ -86,6 +88,9 @@ https://echos.github.io/OriginalPicDownloader/privacy.html
 ================================================================
   バージョン履歴 / Version History
 ================================================================
+
+v1.0.2 (2026-04-18)
+  - A キーでフォーカス中の投稿内の最初の画像をプレビュー表示できるショートカットを追加
 
 v1.0.1 (2026-04-11)
   - 動画・GIF コンテナへの干渉を修正（<video> 要素を含むコンテナはオーバーレイ注入・クリック横取りの対象外）
