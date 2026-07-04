@@ -14,7 +14,9 @@ const state = {
     showOverlay: true,
     skipSavedImages: false,
   },
-  savedImageKeys: new Set(),
+  savedMediaKeys: new Set(),
+  videoUrlsByTweetId: new Map(),
+  recentVideoUrls: [],
 };
 
 // 選択言語のメッセージを保持する
@@ -62,7 +64,7 @@ function toOriginalUrl(src) {
   }
 }
 
-function getImageKey(src) {
+function getMediaKey(src) {
   if (!src) return '';
   try {
     const url = new URL(src);
@@ -89,19 +91,50 @@ function requestSavedStatus(images) {
   });
 }
 
+function rememberVideoUrls(urls, tweetIds = []) {
+  const cleanUrls = chooseBestVideoUrls([...(urls || [])].filter(Boolean));
+  if (!cleanUrls.length) return;
+
+  state.recentVideoUrls = chooseBestVideoUrls([...new Set([...cleanUrls, ...state.recentVideoUrls])]).slice(0, 20);
+  (tweetIds || []).forEach((tweetId) => {
+    if (!tweetId) return;
+    const existing = state.videoUrlsByTweetId.get(tweetId) || [];
+    state.videoUrlsByTweetId.set(tweetId, chooseBestVideoUrls([...new Set([...cleanUrls, ...existing])]));
+  });
+}
+
+function getCachedVideoUrls(tweetId) {
+  return [...(state.videoUrlsByTweetId.get(tweetId) || []), ...state.recentVideoUrls];
+}
+
+window.addEventListener('message', (event) => {
+  if (event.source !== window) return;
+  if (event.data?.source !== 'x-image-viewer' || event.data?.type !== 'XIV_VIDEO_URLS') return;
+  rememberVideoUrls(event.data.urls || [], event.data.tweetIds || []);
+});
+
+function requestBridgeVideoUrls() {
+  window.postMessage({
+    source: 'x-image-viewer',
+    type: 'XIV_REQUEST_VIDEO_URLS',
+  }, '*');
+}
+
 function getImageUrlFromTarget(el) {
   const container = el.closest?.('div[data-testid="tweetPhoto"]');
   const img = container?.querySelector('img');
-  if (!img) return el.dataset.imageUrl || '';
+  if (!img) return el.dataset.mediaUrl || el.dataset.imageUrl || '';
   return toOriginalUrl(img.src || img.currentSrc || '');
 }
 
 function refreshTargetImageUrl(el) {
-  const imageUrl = getImageUrlFromTarget(el);
-  if (imageUrl) {
-    el.dataset.imageUrl = imageUrl;
+  if (el.dataset.mediaType === 'video') return el.dataset.mediaUrl || '';
+  const mediaUrl = getImageUrlFromTarget(el);
+  if (mediaUrl) {
+    el.dataset.mediaUrl = mediaUrl;
+    el.dataset.imageUrl = mediaUrl;
   }
-  return imageUrl;
+  return mediaUrl;
 }
 
 let savedMarkerRefreshTimer = null;
@@ -113,16 +146,16 @@ function scheduleSavedMarkerRefresh() {
 
 async function refreshSavedMarkers() {
   const targets = [
-    ...document.querySelectorAll(`.${XIV_BTN_CLASS}-wrap[data-image-url]`),
-    ...document.querySelectorAll(`#${XIV_OVERLAY_ID} [data-image-url]`),
+    ...document.querySelectorAll(`.${XIV_BTN_CLASS}-wrap[data-media-url]`),
+    ...document.querySelectorAll(`#${XIV_OVERLAY_ID} [data-media-url]`),
   ].filter((el) => refreshTargetImageUrl(el));
   if (!targets.length) return;
 
-  const images = targets.map((el) => ({ url: el.dataset.imageUrl }));
+  const images = targets.map((el) => ({ url: el.dataset.mediaUrl, type: el.dataset.mediaType || 'image' }));
   const saved = await requestSavedStatus(images);
   targets.forEach((el, idx) => {
-    const key = getImageKey(el.dataset.imageUrl);
-    if (saved[idx]) state.savedImageKeys.add(key);
+    const key = getMediaKey(el.dataset.mediaUrl);
+    if (saved[idx]) state.savedMediaKeys.add(key);
     updateSavedMarker(el, saved[idx]);
   });
 }
@@ -164,21 +197,169 @@ function isVideoContainer(container) {
   return container.querySelector('video') !== null;
 }
 
-// article 内の全画像情報を収集する
-function collectImages(article) {
-  const info = extractTweetInfo(article);
-  const imgs = [];
+function getMediaContainers(article) {
+  const containers = [
+    ...article.querySelectorAll('div[data-testid="tweetPhoto"], div[data-testid="videoPlayer"]'),
+  ];
+  return containers.filter((container, idx) => {
+    if (containers.some((other, otherIdx) => otherIdx !== idx && other.contains(container))) return false;
+    return container.querySelector('img, video');
+  });
+}
 
-  article.querySelectorAll('div[data-testid="tweetPhoto"] img').forEach((img) => {
-    const container = img.closest('div[data-testid="tweetPhoto"]');
-    if (container && isVideoContainer(container)) return;
-    const orig = toOriginalUrl(img.src || img.currentSrc || '');
-    if (orig && orig.includes('pbs.twimg.com')) {
-      imgs.push({ url: orig, username: info.username, tweetId: info.tweetId });
-    }
+function getVideoUrlFromTarget(video, article) {
+  const candidates = new Set();
+  const mediaId = getVideoMediaId(video) || getVideoMediaId(video.closest('div[data-testid="tweetPhoto"], div[data-testid="videoPlayer"]')) || getVideoMediaId(article);
+
+  addVideoCandidate(candidates, video.currentSrc || video.src);
+  video.querySelectorAll('source').forEach((source) => addVideoCandidate(candidates, source.src));
+
+  [video, video.closest('div[data-testid="tweetPhoto"], div[data-testid="videoPlayer"]'), article].filter(Boolean).forEach((root) => {
+    ['src', 'href', 'poster'].forEach((attr) => addVideoCandidate(candidates, root.getAttribute?.(attr)));
+    root.querySelectorAll?.('[src], [href], [poster]').forEach((el) => {
+      ['src', 'href', 'poster'].forEach((attr) => addVideoCandidate(candidates, el.getAttribute(attr)));
+    });
   });
 
-  return imgs;
+  getPerformanceVideoUrls(mediaId).forEach((url) => addVideoCandidate(candidates, url));
+  return chooseBestVideoUrl([...candidates]);
+}
+
+async function getSyndicationVideoUrls(tweetId) {
+  if (!tweetId) return [];
+  return new Promise((resolve) => {
+    chrome.runtime.sendMessage({ type: 'GET_TWEET_VIDEO_URLS', tweetId }, (response) => {
+      if (chrome.runtime.lastError) {
+        resolve([]);
+        return;
+      }
+      resolve(response?.urls || []);
+    });
+  });
+}
+
+function addVideoCandidate(candidates, src) {
+  if (!src || src.startsWith('blob:')) return;
+  try {
+    const url = new URL(src, location.href);
+    if (url.hostname.includes('video.twimg.com') && url.pathname.match(/\.mp4$/i)) {
+      url.hash = '';
+      candidates.add(url.toString());
+    }
+  } catch (_) {}
+}
+
+function getVideoMediaId(root) {
+  if (!root) return '';
+  const values = [];
+  ['src', 'currentSrc', 'href', 'poster'].forEach((prop) => {
+    if (root[prop]) values.push(root[prop]);
+    const attr = root.getAttribute?.(prop);
+    if (attr) values.push(attr);
+  });
+  root.querySelectorAll?.('[src], [href], [poster]').forEach((el) => {
+    ['src', 'href', 'poster'].forEach((attr) => {
+      const value = el.getAttribute(attr);
+      if (value) values.push(value);
+    });
+  });
+
+  for (const value of values) {
+    const match = value.match(/\/(?:ext_tw_video|amplify_video|tweet_video)(?:_thumb)?\/([^/?#]+)/);
+    if (match) return match[1];
+  }
+  return '';
+}
+
+function getPerformanceVideoUrls(mediaId) {
+  if (!mediaId) return [];
+  if (!performance?.getEntriesByType) return [];
+  return performance.getEntriesByType('resource')
+    .map((entry) => entry.name)
+    .filter((name) => name.includes('video.twimg.com') && name.match(/\.mp4(?:[?#]|$)/i))
+    .filter((name) => !mediaId || name.includes(`/${mediaId}/`));
+}
+
+function chooseBestVideoUrl(urls) {
+  return chooseBestVideoUrls(urls)[0] || '';
+}
+
+function chooseBestVideoUrls(urls) {
+  return urls.sort((a, b) => getVideoScore(b) - getVideoScore(a));
+}
+
+function getVideoScore(url) {
+  const match = url.match(/\/(\d+)x(\d+)\//);
+  if (!match) return 0;
+  return Number(match[1]) * Number(match[2]);
+}
+
+function collectMediaFromContainer(article, container) {
+  const info = extractTweetInfo(article);
+  const video = container.querySelector('video');
+  if (video) {
+    const url = getVideoUrlFromTarget(video, article);
+    return url ? [{ type: 'video', url, username: info.username, tweetId: info.tweetId }] : [];
+  }
+
+  const img = container.querySelector('img');
+  const orig = toOriginalUrl(img?.src || img?.currentSrc || '');
+  if (orig && orig.includes('pbs.twimg.com')) {
+    return [{ type: 'image', url: orig, username: info.username, tweetId: info.tweetId }];
+  }
+  return [];
+}
+
+async function collectMediaFromContainerAsync(article, container, fallbackVideoUrls = []) {
+  const media = collectMediaFromContainer(article, container);
+  if (media.length || !isVideoContainer(container)) return media;
+
+  const info = extractTweetInfo(article);
+  const url = fallbackVideoUrls.shift();
+  return url ? [{ type: 'video', url, username: info.username, tweetId: info.tweetId }] : [];
+}
+
+// article 内の全メディア情報を収集する
+function collectMedia(article) {
+  const info = extractTweetInfo(article);
+  const media = [];
+  const seen = new Set();
+
+  getMediaContainers(article).forEach((container) => {
+    collectMediaFromContainer(article, container).forEach((item) => {
+      const key = `${item.type}:${item.url}`;
+      if (seen.has(key)) return;
+      seen.add(key);
+      media.push({ ...item, username: info.username, tweetId: info.tweetId });
+    });
+  });
+
+  return media;
+}
+
+async function collectMediaAsync(article) {
+  const info = extractTweetInfo(article);
+  requestBridgeVideoUrls();
+  await new Promise((resolve) => setTimeout(resolve, 100));
+  const fallbackVideoUrls = chooseBestVideoUrls([
+    ...getCachedVideoUrls(info.tweetId),
+    ...(await getSyndicationVideoUrls(info.tweetId)),
+  ]);
+  const media = [];
+  const seen = new Set();
+
+  const containers = getMediaContainers(article);
+  for (const container of containers) {
+    const items = await collectMediaFromContainerAsync(article, container, fallbackVideoUrls);
+    items.forEach((item) => {
+      const key = `${item.type}:${item.url}`;
+      if (seen.has(key)) return;
+      seen.add(key);
+      media.push({ ...item, username: info.username, tweetId: info.tweetId });
+    });
+  }
+
+  return media;
 }
 
 // ============================================================
@@ -187,10 +368,8 @@ function collectImages(article) {
 function injectOverlay(article) {
   article.setAttribute(XIV_ATTR, 'true');
 
-  const photoContainers = article.querySelectorAll('div[data-testid="tweetPhoto"]');
+  const photoContainers = getMediaContainers(article);
   photoContainers.forEach((container, idx) => {
-    // 動画コンテナにはオーバーレイを注入しない
-    if (isVideoContainer(container)) return;
     if (container.querySelector(`.${XIV_BTN_CLASS}-wrap`)) return;
     // コンテナが既に position: relative でなければ設定
     const cs = getComputedStyle(container);
@@ -201,8 +380,10 @@ function injectOverlay(article) {
 
     const wrap = document.createElement('div');
     wrap.className = `${XIV_BTN_CLASS}-wrap`;
-    const img = container.querySelector('img');
-    const imageUrl = toOriginalUrl(img?.src || img?.currentSrc || '');
+    const initialMedia = collectMediaFromContainer(article, container)[0];
+    const imageUrl = initialMedia?.url || '';
+    wrap.dataset.mediaUrl = imageUrl;
+    wrap.dataset.mediaType = initialMedia?.type || (isVideoContainer(container) ? 'video' : 'image');
     wrap.dataset.imageUrl = imageUrl;
     wrap.style.cssText = `
       position: absolute;
@@ -265,24 +446,31 @@ function injectOverlay(article) {
       btn.style.background = 'rgba(0,0,0,0.65)';
     });
 
-    btn.addEventListener('click', (e) => {
+    btn.addEventListener('click', async (e) => {
       e.preventDefault();
       e.stopPropagation();
-      const img = container.querySelector('img');
-      if (!img) return;
       const info = extractTweetInfo(article);
-      const orig = toOriginalUrl(img.src || img.currentSrc || '');
-      if (!orig) return;
+      requestBridgeVideoUrls();
+      await new Promise((resolve) => setTimeout(resolve, 100));
+      const fallbackUrls = chooseBestVideoUrls([
+        ...getCachedVideoUrls(info.tweetId),
+        ...(await getSyndicationVideoUrls(info.tweetId)),
+      ]);
+      const media = await collectMediaFromContainerAsync(article, container, fallbackUrls);
+      if (!media.length) return;
+      wrap.dataset.mediaUrl = media[0].url;
+      wrap.dataset.mediaType = media[0].type || 'image';
+      wrap.dataset.imageUrl = media[0].url;
       chrome.runtime.sendMessage({
         type: 'START_DOWNLOAD',
-        payload: [{ url: orig, username: info.username, tweetId: info.tweetId }],
+        payload: media,
       });
     });
 
     wrap.appendChild(badge);
     wrap.appendChild(btn);
     container.appendChild(wrap);
-    updateSavedMarker(wrap, state.savedImageKeys.has(getImageKey(refreshTargetImageUrl(wrap) || imageUrl)));
+    updateSavedMarker(wrap, state.savedMediaKeys.has(getMediaKey(refreshTargetImageUrl(wrap) || imageUrl)));
   });
   scheduleSavedMarkerRefresh();
 }
@@ -319,9 +507,16 @@ function renderOverlay() {
     cursor: zoom-out;
   `;
 
-  const img = document.createElement('img');
-  img.src = imgInfo.url;
-  img.style.cssText = `
+  const mediaEl = document.createElement(imgInfo.type === 'video' ? 'video' : 'img');
+  mediaEl.src = imgInfo.url;
+  if (imgInfo.type === 'video') {
+    mediaEl.controls = true;
+    mediaEl.autoplay = true;
+    mediaEl.loop = true;
+  } else {
+    mediaEl.alt = '';
+  }
+  mediaEl.style.cssText = `
     max-height: 90vh;
     max-width: 90vw;
     object-fit: contain;
@@ -329,13 +524,14 @@ function renderOverlay() {
     cursor: default;
     box-shadow: 0 4px 24px rgba(0,0,0,0.6);
   `;
-  img.addEventListener('click', (e) => e.stopPropagation());
-  overlay.appendChild(img);
+  mediaEl.addEventListener('click', (e) => e.stopPropagation());
+  overlay.appendChild(mediaEl);
 
   const savedBadge = document.createElement('div');
   savedBadge.className = XIV_SAVED_BADGE_CLASS;
-  savedBadge.dataset.imageUrl = imgInfo.url;
-  savedBadge.hidden = !state.savedImageKeys.has(getImageKey(imgInfo.url));
+  savedBadge.dataset.mediaUrl = imgInfo.url;
+  savedBadge.dataset.mediaType = imgInfo.type || 'image';
+  savedBadge.hidden = !state.savedMediaKeys.has(getMediaKey(imgInfo.url));
   savedBadge.title = csT('savedImageBadgeTitle');
   savedBadge.textContent = '✓';
   savedBadge.style.cssText = `
@@ -469,11 +665,16 @@ document.addEventListener('keydown', (e) => {
   if (e.key === 'a' && !overlayOpen) {
     const article = state.focusedArticle;
     if (!article) return;
-    const containers = [...article.querySelectorAll('div[data-testid="tweetPhoto"]')];
-    const firstContainer = containers.find((c) => !isVideoContainer(c));
+    const containers = getMediaContainers(article);
+    const firstContainer = containers.find((c) => collectMediaFromContainer(article, c).length > 0 || isVideoContainer(c));
     if (!firstContainer) return;
-    const img = firstContainer.querySelector('img');
-    if (img) img.click();
+    e.preventDefault();
+    e.stopPropagation();
+    collectMediaAsync(article).then((images) => {
+      if (!images.length) return;
+      const clickedIndex = containers.indexOf(firstContainer);
+      showImageOverlay(images, clickedIndex >= 0 ? clickedIndex : 0);
+    });
     return;
   }
 
@@ -483,10 +684,11 @@ document.addEventListener('keydown', (e) => {
     } else {
       const article = state.focusedArticle;
       if (!article) return;
-      const images = collectImages(article);
-      if (images.length > 0) {
-        chrome.runtime.sendMessage({ type: 'START_DOWNLOAD', payload: images });
-      }
+      collectMediaAsync(article).then((images) => {
+        if (images.length > 0) {
+          chrome.runtime.sendMessage({ type: 'START_DOWNLOAD', payload: images });
+        }
+      });
     }
   }
 }, { capture: true });
@@ -500,23 +702,21 @@ document.addEventListener('click', (e) => {
 
   const container = e.target.closest('div[data-testid="tweetPhoto"]');
   if (!container) return;
-
-  // 動画コンテナのクリックは横取りしない
   if (isVideoContainer(container)) return;
 
   const article = e.target.closest('article[data-testid="tweet"]');
   if (!article) return;
 
+  const images = collectMedia(article);
+  if (images.length === 0 || !collectMediaFromContainer(article, container).length) return;
+
   e.preventDefault();
   e.stopPropagation();
   e.stopImmediatePropagation();
 
-  const images = collectImages(article);
-  if (images.length === 0) return;
-
   // クリックした画像のインデックスを特定して初期表示位置に使う
-  const photoContainers = [...article.querySelectorAll('div[data-testid="tweetPhoto"]')];
-  const clickedIndex = photoContainers.indexOf(container);
+  const mediaContainers = getMediaContainers(article);
+  const clickedIndex = mediaContainers.indexOf(container);
   showImageOverlay(images, clickedIndex >= 0 ? clickedIndex : 0);
 }, { capture: true });
 
@@ -524,7 +724,7 @@ document.addEventListener('click', (e) => {
 // イベントリスナー
 // ============================================================
 document.addEventListener('mouseover', (e) => {
-  const img = e.target.closest('div[data-testid="tweetPhoto"] img');
+  const img = e.target.closest('div[data-testid="tweetPhoto"] img, div[data-testid="tweetPhoto"] video, div[data-testid="videoPlayer"] video');
   state.hoveredImg = img || null;
 
   const article = e.target.closest('article[data-testid="tweet"]');
@@ -556,26 +756,42 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     // ホバー中の画像が1枚だけの場合はそれだけ返す
     if (state.hoveredImg) {
       const info = extractTweetInfo(target);
-      const orig = toOriginalUrl(state.hoveredImg.src || state.hoveredImg.currentSrc || '');
-      sendResponse({
-        images: orig ? [{ url: orig, username: info.username, tweetId: info.tweetId }] : [],
+      const container = state.hoveredImg.closest('div[data-testid="tweetPhoto"], div[data-testid="videoPlayer"]');
+      requestBridgeVideoUrls();
+      new Promise((resolve) => setTimeout(resolve, 100)).then(() => getSyndicationVideoUrls(info.tweetId)).then((fallbackUrls) => {
+        fallbackUrls = chooseBestVideoUrls([...getCachedVideoUrls(info.tweetId), ...fallbackUrls]);
+        const orig = state.hoveredImg.tagName === 'IMG' ? toOriginalUrl(state.hoveredImg.src || state.hoveredImg.currentSrc || '') : '';
+        return container
+          ? collectMediaFromContainerAsync(target, container, fallbackUrls)
+          : Promise.resolve(orig ? [{ type: 'image', url: orig, username: info.username, tweetId: info.tweetId }] : []);
+      }).then((media) => {
+        sendResponse({ images: media });
       });
+      return true;
     } else {
-      sendResponse({ images: collectImages(target) });
+      collectMediaAsync(target).then((images) => sendResponse({ images }));
+      return true;
     }
-    return false;
   }
 
   if (message.type === 'DOWNLOAD_ALL_IN_POST') {
     const target = state.hoveredArticle || state.focusedArticle;
-    sendResponse({ images: target ? collectImages(target) : [] });
-    return false;
+    if (!target) {
+      sendResponse({ images: [] });
+      return false;
+    }
+    collectMediaAsync(target).then((images) => sendResponse({ images }));
+    return true;
   }
 
   if (message.type === 'GET_CURRENT_IMAGES') {
     const target = state.hoveredArticle || state.focusedArticle;
-    sendResponse({ images: target ? collectImages(target) : [] });
-    return false;
+    if (!target) {
+      sendResponse({ images: [] });
+      return false;
+    }
+    collectMediaAsync(target).then((images) => sendResponse({ images }));
+    return true;
   }
 
   if (message.type === 'SETTINGS_UPDATED') {
@@ -584,10 +800,10 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   }
 
   if (message.type === 'SAVED_IMAGES_UPDATED') {
-    (message.keys || []).forEach((key) => state.savedImageKeys.add(key));
-    document.querySelectorAll('[data-image-url]').forEach((el) => {
+    (message.keys || []).forEach((key) => state.savedMediaKeys.add(key));
+    document.querySelectorAll('[data-media-url]').forEach((el) => {
       refreshTargetImageUrl(el);
-      updateSavedMarker(el, state.savedImageKeys.has(getImageKey(el.dataset.imageUrl)));
+      updateSavedMarker(el, state.savedMediaKeys.has(getMediaKey(el.dataset.mediaUrl)));
     });
     scheduleSavedMarkerRefresh();
     return false;

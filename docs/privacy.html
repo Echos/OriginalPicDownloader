@@ -131,13 +131,13 @@
 
   <h2>1. 概要</h2>
   <p>
-    OriginalPicDownloader（以下「本拡張機能」）は、X (x.com) のタイムライン上の画像を
-    オリジナル画質でダウンロードするための Chrome 拡張機能です。
+    OriginalPicDownloader（以下「本拡張機能」）は、X (x.com) のタイムライン上の画像や動画を
+    ダウンロードするための Chrome 拡張機能です。
     本拡張機能は、ユーザーの個人情報を一切収集・送信しません。
   </p>
 
   <h2>2. 収集するデータ</h2>
-  <p>本拡張機能は外部サーバーへデータを送信しません。保存するデータは以下のみです。</p>
+  <p>本拡張機能は独自の外部サーバーへデータを送信しません。動画URL取得のため、対象投稿IDを X/Twitter の公開埋め込み用エンドポイントへ問い合わせる場合があります。保存するデータは以下のみです。</p>
   <table>
     <thead>
       <tr>
@@ -153,7 +153,7 @@
         <td>設定の保持・同期</td>
       </tr>
       <tr>
-        <td>保存済み画像の判定キー（画像 URL から生成したホスト名とパス）</td>
+        <td>保存済みメディアの判定キー（メディア URL から生成したホスト名とパス）</td>
         <td>chrome.storage.local（端末内のみ）</td>
         <td>保存済みマークの表示・重複保存防止</td>
       </tr>
@@ -169,15 +169,15 @@
     <tbody>
       <tr>
         <td><code>downloads</code></td>
-        <td>画像ファイルをユーザーのローカルディスクに保存するため（<code>chrome.downloads.download()</code> の呼び出しに必須）</td>
+        <td>画像・動画ファイルをユーザーのローカルディスクに保存するため（<code>chrome.downloads.download()</code> の呼び出しに必須）</td>
       </tr>
       <tr>
         <td><code>storage</code></td>
-        <td>ファイル名パターン・保存先・表示言語などのユーザー設定、および保存済み画像の判定キーを端末に保存するため</td>
+        <td>ファイル名パターン・保存先・表示言語などのユーザー設定、および保存済みメディアの判定キーを端末に保存するため</td>
       </tr>
       <tr>
-        <td>ホスト権限 (x.com / twitter.com)</td>
-        <td>これらのページにコンテンツスクリプトを注入し、投稿画像の検出・ダウンロード UI の表示を行うため</td>
+        <td>ホスト権限 (x.com / twitter.com / cdn.syndication.twimg.com)</td>
+        <td>X のページにコンテンツスクリプトを注入し、投稿メディアの検出・ダウンロード UI の表示、および動画URL取得用の公開埋め込みデータ取得を行うため</td>
       </tr>
     </tbody>
   </table>
@@ -212,6 +212,11 @@
     </thead>
     <tbody>
       <tr>
+        <td>v2.0.0</td>
+        <td>2026-07-04</td>
+        <td>画像・動画・GIF 相当メディアの保存に対応し、保存済み判定をメディア共通へ拡張。動画URL取得用の公開埋め込みデータ取得を追加</td>
+      </tr>
+      <tr>
         <td>v1.1.0</td>
         <td>2026-07-04</td>
         <td>保存済み画像のマーク表示、保存済み画像の重複ダウンロード防止オプションを追加</td>
@@ -244,12 +249,12 @@
 
   <h2>1. Overview</h2>
   <p>
-    OriginalPicDownloader is a Chrome extension that downloads original-quality images
+    OriginalPicDownloader is a Chrome extension that downloads images and videos
     from X (x.com) posts. This extension does not collect or transmit any personal information.
   </p>
 
   <h2>2. Data Collected</h2>
-  <p>No data is sent to any external server. The only data stored is:</p>
+  <p>No data is sent to any server operated by this extension. To resolve video URLs, the target post ID may be requested from X/Twitter's public embed endpoint. The only data stored is:</p>
   <table>
     <thead>
       <tr><th>Data</th><th>Storage</th><th>Purpose</th></tr>
@@ -261,13 +266,13 @@
         <td>Persisting and syncing preferences</td>
       </tr>
       <tr>
-        <td>Already-saved image identifiers (host and path generated from the image URL)</td>
+        <td>Already-saved media identifiers (host and path generated from the media URL)</td>
         <td>chrome.storage.local (local device only)</td>
         <td>Displaying already-saved marks and preventing duplicate downloads</td>
       </tr>
     </tbody>
   </table>
-  <p>Already-saved image identifiers are stored only on the local device and are never sent to an external server. No browsing history or personal information is recorded or transmitted.</p>
+  <p>Already-saved media identifiers are stored only on the local device and are never sent to an external server. No browsing history or personal information is recorded or transmitted.</p>
 
   <h2>3. Permissions Used</h2>
   <table>
@@ -277,15 +282,15 @@
     <tbody>
       <tr>
         <td><code>downloads</code></td>
-        <td>Required to save image files to the user's local disk via <code>chrome.downloads.download()</code></td>
+        <td>Required to save image and video files to the user's local disk via <code>chrome.downloads.download()</code></td>
       </tr>
       <tr>
         <td><code>storage</code></td>
-        <td>Required to persist user preferences such as filename pattern, save directory, and display language, and to store already-saved image identifiers on the local device</td>
+        <td>Required to persist user preferences such as filename pattern, save directory, and display language, and to store already-saved media identifiers on the local device</td>
       </tr>
       <tr>
-        <td>Host permissions (x.com / twitter.com)</td>
-        <td>Required to inject a content script into these pages to detect post images and display the download UI</td>
+        <td>Host permissions (x.com / twitter.com / cdn.syndication.twimg.com)</td>
+        <td>Required to inject a content script into X pages, detect post media, display the download UI, and request public embed data for video URL resolution</td>
       </tr>
     </tbody>
   </table>
@@ -317,6 +322,11 @@
       <tr><th>Version</th><th>Release Date</th><th>Changes</th></tr>
     </thead>
     <tbody>
+      <tr>
+        <td>v2.0.0</td>
+        <td>2026-07-04</td>
+        <td>Added support for saving image, video, and GIF-like media, expanded saved-item tracking to media, and added public embed data lookup for video URL resolution</td>
+      </tr>
       <tr>
         <td>v1.1.0</td>
         <td>2026-07-04</td>

@@ -1,19 +1,27 @@
 {
   "appName":        { "message": "OriginalPicDownloader" },
-  "appDescription": { "message": "X (x.com) の投稿からオリジナル画質の画像を保存します。X Corp. とは無関係の独立ツールです。" },
+  "appDescription": { "message": "X (x.com) の投稿から画像や動画を保存します。X Corp. とは無関係の独立ツールです。" },
 
-  "cmdDownloadHovered": { "message": "ホバー中または選択中のツイート画像をダウンロード" },
-  "cmdDownloadAll":     { "message": "選択中の投稿の全画像をダウンロード" },
+  "cmdDownloadHovered": { "message": "ホバー中または選択中のツイートメディアをダウンロード" },
+  "cmdDownloadAll":     { "message": "選択中の投稿の全メディアをダウンロード" },
 
-  "statusHoverPrompt": { "message": "ツイートにカーソルを合わせてください" },
+  "statusHoverPrompt": { "message": "メディア付きの投稿にカーソルを合わせてください" },
   "statusNotXTab":     { "message": "X のタブがアクティブではありません" },
   "statusOpenX":       { "message": "X (Twitter) のページを開いてください" },
   "statusLoading":     { "message": "ページの読み込みが完了していません" },
 
   "btnDownloadAll": { "message": "すべてダウンロード" },
   "btnDownloading": { "message": "ダウンロード開始..." },
-  "btnSaveThis":    { "message": "この画像を保存" },
-  "savedImageBadgeTitle": { "message": "保存済みの画像" },
+  "btnSaveThis":    { "message": "このメディアを保存" },
+  "savedImageBadgeTitle": { "message": "保存済みのメディア" },
+  "mediaCount": {
+    "message": "$COUNT$ 件",
+    "placeholders": { "count": { "content": "$1", "example": "3" } }
+  },
+  "mediaAlt": {
+    "message": "メディア $INDEX$",
+    "placeholders": { "index": { "content": "$1", "example": "1" } }
+  },
   "imageCount": {
     "message": "$COUNT$ 枚",
     "placeholders": { "count": { "content": "$1", "example": "3" } }
@@ -22,9 +30,9 @@
     "message": "画像 $INDEX$",
     "placeholders": { "index": { "content": "$1", "example": "1" } }
   },
-  "shortcutHint":      { "message": "Alt+S: ホバー画像を保存 / Alt+Shift+S: 全画像を保存" },
+  "shortcutHint":      { "message": "Alt+S: ホバーメディアを保存 / Alt+Shift+S: 全メディアを保存" },
   "settingsLinkTitle": { "message": "設定を開く" },
-  "btnSaveImageTitle": { "message": "オリジナル画像を保存 (Alt+S)" },
+  "btnSaveImageTitle": { "message": "メディアを保存 (Alt+S)" },
 
   "headingSettings":   { "message": "OriginalPicDownloader 設定" },
   "sectionLanguage": { "message": "表示言語" },
@@ -44,17 +52,17 @@
   "optionPng":         { "message": "PNG に統一" },
 
   "sectionBehavior":   { "message": "動作設定" },
-  "labelShowOverlay":  { "message": "ツイート画像の上にダウンロードボタンを表示する" },
+  "labelShowOverlay":  { "message": "投稿メディアの上にダウンロードボタンを表示する" },
   "labelAskBeforeSave":{ "message": "保存前に保存先の確認ダイアログを表示する" },
   "hintAskBeforeSave": { "message": "ON にすると毎回ダイアログが開きます。ブラウザの設定より優先されます。" },
-  "labelSkipSavedImages": { "message": "保存済みの画像は再保存しない" },
-  "hintSkipSavedImages":  { "message": "ON にすると、過去に保存したことがある画像はダウンロードを開始しません。" },
+  "labelSkipSavedImages": { "message": "保存済みのメディアは再保存しない" },
+  "hintSkipSavedImages":  { "message": "ON にすると、過去に保存したことがあるメディアはダウンロードを開始しません。" },
 
   "sectionShortcuts":    { "message": "ショートカットキー" },
-  "shortcutHoverSave":   { "message": "ホバー中の画像を保存" },
-  "shortcutAllSave":     { "message": "フォーカス中の投稿の全画像を保存" },
-  "shortcutFocusedSave": { "message": "フォーカス中の投稿の画像を保存" },
-  "shortcutPreviewSave": { "message": "プレビュー中の画像を保存" },
+  "shortcutHoverSave":   { "message": "ホバー中のメディアを保存" },
+  "shortcutAllSave":     { "message": "フォーカス中の投稿の全メディアを保存" },
+  "shortcutFocusedSave": { "message": "フォーカス中の投稿のメディアを保存" },
+  "shortcutPreviewSave": { "message": "プレビュー中のメディアを保存" },
   "shortcutClosePreview":{ "message": "プレビューを閉じる" },
   "shortcutNote":        { "message": "ショートカットを変更するには <a href=\"chrome://extensions/shortcuts\" target=\"_blank\">chrome://extensions/shortcuts</a> を開いてください。" },
 

@@ -50,17 +50,26 @@ function renderImages(images) {
   imageGrid.hidden = false;
   footer.hidden = false;
   imageGrid.innerHTML = '';
-  imageCount.textContent = t('imageCount', [images.length.toString()]);
+  imageCount.textContent = t('mediaCount', [images.length.toString()]);
   downloadAllBtn.disabled = false;
 
   images.forEach((imgInfo, idx) => {
     const item = document.createElement('div');
     item.className = 'preview-item';
 
-    const img = document.createElement('img');
-    img.src = imgInfo.url;
-    img.alt = t('imageAlt', [(idx + 1).toString()]);
-    img.loading = 'lazy';
+    const preview = document.createElement(imgInfo.type === 'video' ? 'video' : 'img');
+    preview.src = imgInfo.url;
+    if (imgInfo.type === 'video') {
+      preview.muted = true;
+      preview.loop = true;
+      preview.playsInline = true;
+      preview.preload = 'metadata';
+      preview.addEventListener('mouseenter', () => preview.play().catch(() => {}));
+      preview.addEventListener('mouseleave', () => preview.pause());
+    } else {
+      preview.alt = t('mediaAlt', [(idx + 1).toString()]);
+      preview.loading = 'lazy';
+    }
 
     const badge = document.createElement('span');
     badge.className = 'saved-badge';
@@ -84,7 +93,7 @@ function renderImages(images) {
       });
     });
 
-    item.appendChild(img);
+    item.appendChild(preview);
     item.appendChild(badge);
     item.appendChild(btn);
     imageGrid.appendChild(item);

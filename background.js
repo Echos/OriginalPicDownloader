@@ -11,7 +11,8 @@ const DEFAULT_SETTINGS = {
 };
 
 const SAVED_IMAGES_KEY = 'savedImages';
-const pendingSavedImageKeys = new Set();
+const SAVED_MEDIA_KEY = 'savedMedia';
+const pendingSavedMediaKeys = new Set();
 
 // ショートカットキーのコマンドを受信
 chrome.commands.onCommand.addListener(async (command) => {
@@ -43,8 +44,15 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   }
 
   if (message.type === 'GET_SAVED_IMAGE_STATUS') {
-    getSavedImageStatus(message.payload || []).then((saved) => {
+    getSavedMediaStatus(message.payload || []).then((saved) => {
       sendResponse({ saved });
+    });
+    return true;
+  }
+
+  if (message.type === 'GET_TWEET_VIDEO_URLS') {
+    getTweetVideoUrls(message.tweetId).then((urls) => {
+      sendResponse({ urls });
     });
     return true;
   }
@@ -55,22 +63,22 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 // ダウンロード処理
 async function handleDownloads(images) {
   const settings = await chrome.storage.sync.get(DEFAULT_SETTINGS);
-  const savedImages = await getSavedImages();
+  const savedMedia = await getSavedMedia();
   const newlySavedKeys = [];
   let skipped = 0;
 
   for (let i = 0; i < images.length; i++) {
-    const imageKey = getImageKey(images[i].url);
-    if (settings.skipSavedImages && imageKey && (savedImages[imageKey] || pendingSavedImageKeys.has(imageKey))) {
+    const mediaKey = getMediaKey(images[i].url);
+    if (settings.skipSavedImages && mediaKey && (savedMedia[mediaKey] || pendingSavedMediaKeys.has(mediaKey))) {
       skipped++;
       continue;
     }
-    if (settings.skipSavedImages && imageKey) {
-      pendingSavedImageKeys.add(imageKey);
+    if (settings.skipSavedImages && mediaKey) {
+      pendingSavedMediaKeys.add(mediaKey);
     }
 
     const filename = buildFilename(settings, images[i], i, images.length);
-    const url = toPreferredUrl(images[i].url, settings.preferFormat);
+    const url = toPreferredUrl(images[i].url, settings.preferFormat, images[i].type);
 
     await new Promise((resolve) => {
       setTimeout(() => {
@@ -84,10 +92,10 @@ async function handleDownloads(images) {
           (downloadId) => {
             if (chrome.runtime.lastError) {
               console.warn('[XIVb] download error:', chrome.runtime.lastError.message);
-              if (imageKey) pendingSavedImageKeys.delete(imageKey);
-            } else if (downloadId && imageKey) {
-              savedImages[imageKey] = Date.now();
-              newlySavedKeys.push(imageKey);
+              if (mediaKey) pendingSavedMediaKeys.delete(mediaKey);
+            } else if (downloadId && mediaKey) {
+              savedMedia[mediaKey] = Date.now();
+              newlySavedKeys.push(mediaKey);
             }
             resolve();
           }
@@ -97,24 +105,24 @@ async function handleDownloads(images) {
   }
 
   if (newlySavedKeys.length > 0) {
-    await chrome.storage.local.set({ [SAVED_IMAGES_KEY]: savedImages });
+    await chrome.storage.local.set({ [SAVED_MEDIA_KEY]: savedMedia });
     notifySavedImagesUpdated(newlySavedKeys);
   }
-  newlySavedKeys.forEach((key) => pendingSavedImageKeys.delete(key));
+  newlySavedKeys.forEach((key) => pendingSavedMediaKeys.delete(key));
 
   return { saved: newlySavedKeys.length, skipped };
 }
 
-async function getSavedImages() {
-  const result = await chrome.storage.local.get({ [SAVED_IMAGES_KEY]: {} });
-  return result[SAVED_IMAGES_KEY] || {};
+async function getSavedMedia() {
+  const result = await chrome.storage.local.get({ [SAVED_IMAGES_KEY]: {}, [SAVED_MEDIA_KEY]: {} });
+  return { ...(result[SAVED_IMAGES_KEY] || {}), ...(result[SAVED_MEDIA_KEY] || {}) };
 }
 
-async function getSavedImageStatus(images) {
-  const savedImages = await getSavedImages();
+async function getSavedMediaStatus(images) {
+  const savedMedia = await getSavedMedia();
   return images.map((image) => {
-    const key = getImageKey(typeof image === 'string' ? image : image.url);
-    return Boolean(key && savedImages[key]);
+    const key = getMediaKey(typeof image === 'string' ? image : image.url);
+    return Boolean(key && savedMedia[key]);
   });
 }
 
@@ -126,7 +134,7 @@ async function notifySavedImagesUpdated(keys) {
   }
 }
 
-function getImageKey(src) {
+function getMediaKey(src) {
   if (!src) return '';
   try {
     const url = new URL(src);
@@ -141,11 +149,59 @@ function getImageKey(src) {
   }
 }
 
+async function getTweetVideoUrls(tweetId) {
+  if (!tweetId) return [];
+  try {
+    const res = await fetch(`https://cdn.syndication.twimg.com/tweet-result?id=${encodeURIComponent(tweetId)}&lang=ja`);
+    if (!res.ok) return [];
+    const data = await res.json();
+    return extractVideoUrlsFromObject(data);
+  } catch (_) {
+    return [];
+  }
+}
+
+function extractVideoUrlsFromObject(value, urls = new Set()) {
+  if (!value) return [];
+  if (typeof value === 'string') {
+    addVideoUrl(urls, value);
+    return chooseBestVideoUrls([...urls]);
+  }
+  if (Array.isArray(value)) {
+    value.forEach((item) => extractVideoUrlsFromObject(item, urls));
+    return chooseBestVideoUrls([...urls]);
+  }
+  if (typeof value === 'object') {
+    Object.values(value).forEach((item) => extractVideoUrlsFromObject(item, urls));
+  }
+  return chooseBestVideoUrls([...urls]);
+}
+
+function addVideoUrl(urls, src) {
+  try {
+    const url = new URL(src);
+    if (url.hostname.includes('video.twimg.com') && url.pathname.match(/\.mp4$/i)) {
+      url.hash = '';
+      urls.add(url.toString());
+    }
+  } catch (_) {}
+}
+
+function chooseBestVideoUrls(urls) {
+  return urls.sort((a, b) => getVideoScore(b) - getVideoScore(a));
+}
+
+function getVideoScore(url) {
+  const match = url.match(/\/(\d+)x(\d+)\//);
+  if (!match) return 0;
+  return Number(match[1]) * Number(match[2]);
+}
+
 // ファイル名を生成する
 function buildFilename(settings, info, index, total) {
   const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
   const padWidth = total >= 10 ? 2 : 1;
-  const ext = getExtFromUrl(info.url);
+  const ext = getExtFromUrl(info.url, info.type);
 
   const name = settings.pattern
     .replace(/{username}/g, sanitizeFilename(info.username || 'unknown'))
@@ -158,23 +214,24 @@ function buildFilename(settings, info, index, total) {
 }
 
 // URLから拡張子を取得する
-function getExtFromUrl(url) {
+function getExtFromUrl(url, type = 'image') {
+  if (type === 'video') return 'mp4';
   try {
     const u = new URL(url);
     const fmt = u.searchParams.get('format');
     if (fmt) return fmt === 'png' ? 'png' : 'jpg';
     const path = u.pathname;
-    const match = path.match(/\.(jpg|jpeg|png|webp|gif)$/i);
+    const match = path.match(/\.(jpg|jpeg|png|webp|gif|mp4|mov|webm)$/i);
     if (match) return match[1].toLowerCase();
   } catch (_) {}
   return 'jpg';
 }
 
 // 設定に応じてURLのformatを調整する
-function toPreferredUrl(src, preferFormat) {
+function toPreferredUrl(src, preferFormat, type = 'image') {
   try {
     const url = new URL(src);
-    if (!url.hostname.includes('pbs.twimg.com')) return src;
+    if (type === 'video' || !url.hostname.includes('pbs.twimg.com')) return src;
 
     // name パラメータを orig に固定
     url.searchParams.set('name', 'orig');

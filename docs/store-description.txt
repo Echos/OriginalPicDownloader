@@ -8,32 +8,32 @@
 
 ■ 短い説明文（132文字以内）
 
-X (x.com) の投稿画像をオリジナル画質で保存。保存済み画像のマーク表示と重複保存防止にも対応。ファイル名もカスタマイズ可能。
+X (x.com) の投稿メディアを保存。保存済みメディアのマーク表示と重複保存防止にも対応。ファイル名もカスタマイズ可能。
 
 
 ■ 詳細説明文
 
-X (x.com / Twitter) のタイムラインに表示される画像を、圧縮なしのオリジナル画質でダウンロードできる拡張機能です。
+X (x.com / Twitter) のタイムラインに表示される画像や動画をダウンロードできる拡張機能です。
 
 【主な機能】
 - 画像をクリックするとオリジナル画像をオーバーレイ表示
-- 複数画像の投稿は全画像を並べてプレビュー・一括ダウンロード
-- j/k キーでオーバーレイ内の画像をスムーズに切り替え
-- 各画像にホバーするだけで表示されるダウンロードボタン
+- 複数メディアの投稿はプレビュー・一括ダウンロードに対応
+- j/k キーでオーバーレイ内のメディアをスムーズに切り替え
+- 各メディアにホバーするだけで表示されるダウンロードボタン
 - ファイル名パターンを自由にカスタマイズ（例: {username}_{tweetId}_{index}）
 - 保存フォーマットを選択（オリジナル / JPEG / PNG）
-- 保存済み画像にマークを表示
-- 保存済み画像の重複ダウンロードを防止するオプション
+- 保存済みメディアにマークを表示
+- 保存済みメディアの重複ダウンロードを防止するオプション
 - 表示言語を切り替え可能（日本語 / English）
-- 動画・GIF には干渉せず、静止画のみに動作
+- 動画・GIF 相当の投稿メディア保存に対応（取得できる直MP4 URLが対象）
 
 【キーボードショートカット】
-- Alt+S         ホバー中の画像を保存
-- Alt+Shift+S   投稿の全画像を保存
-- A             フォーカス中の投稿画像をプレビュー表示
-- D             プレビュー中の画像を保存
-- J             次の画像へ（オーバーレイ表示中）
-- K             前の画像へ（オーバーレイ表示中）
+- Alt+S         ホバー中のメディアを保存
+- Alt+Shift+S   投稿の全メディアを保存
+- A             フォーカス中の投稿メディアをプレビュー表示
+- D             プレビュー中のメディアを保存
+- J             次のメディアへ（オーバーレイ表示中）
+- K             前のメディアへ（オーバーレイ表示中）
 - Esc           プレビューを閉じる
 
 このツールは X Corp. および Twitter, Inc. とは無関係の独立した非公式ツールです。
@@ -45,32 +45,32 @@ X (x.com / Twitter) のタイムラインに表示される画像を、圧縮な
 
 ■ Short description (up to 132 characters)
 
-Save original-quality images from X posts, mark already-saved images, and optionally prevent duplicate downloads.
+Save media from X posts, mark already-saved items, and optionally prevent duplicate downloads.
 
 
 ■ Detailed description
 
-Download full-resolution, uncompressed images from X (x.com / Twitter) timeline posts with ease.
+Download images and videos from X (x.com / Twitter) timeline posts with ease.
 
 Features:
 - Click any post image to preview it full-screen at original quality
-- Preview and batch-download multiple images side by side
-- Navigate between images using j/k keys in the overlay
-- Hover download button appears directly on each image
+- Preview and batch-download multiple media items
+- Navigate between media items using j/k keys in the overlay
+- Hover download button appears directly on each media item
 - Fully customizable filename pattern (e.g. {username}_{tweetId}_{index})
 - Choose save format: original / JPEG / PNG
-- Mark images that have already been saved
-- Optionally skip duplicate downloads for already-saved images
+- Mark media that has already been saved
+- Optionally skip duplicate downloads for already-saved media
 - Switch display language between Japanese and English
-- Works on still images only — videos and GIFs are never interrupted
+- Supports video/GIF-like post media when a direct MP4 URL is available
 
 Keyboard Shortcuts:
-- Alt+S           Save hovered image
-- Alt+Shift+S     Save all images in focused post
-- A               Preview image in focused post
-- D               Save previewed images
-- J               Next image (while overlay is open)
-- K               Previous image (while overlay is open)
+- Alt+S           Save hovered media
+- Alt+Shift+S     Save all media in focused post
+- A               Preview media in focused post
+- D               Save previewed media
+- J               Next media (while overlay is open)
+- K               Previous media (while overlay is open)
 - Esc             Close preview
 
 This is an independent, unofficial tool not affiliated with, endorsed by, or sponsored by X Corp. or Twitter, Inc.
@@ -92,6 +92,13 @@ https://echos.github.io/OriginalPicDownloader/privacy.html
 ================================================================
   バージョン履歴 / Version History
 ================================================================
+
+v2.0.0 (2026-07-04)
+  - 投稿内の画像・動画・GIF 相当メディアの保存に対応
+  - ホバー保存、ポップアップ、一括保存、ショートカットをメディア共通で利用できるように更新
+  - 保存済み判定を画像専用からメディア共通へ拡張
+  - X の動画URL取得に対応するため、ページ内の動画レスポンス捕捉処理を追加
+  - メディア保存対応に合わせて拡張機能アイコンを刷新
 
 v1.1.0 (2026-07-04)
   - 保存したことがある画像を記録し、X の画面・プレビュー・ポップアップ上で保存済みマークを表示

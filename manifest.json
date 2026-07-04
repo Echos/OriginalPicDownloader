@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "__MSG_appName__",
-  "version": "1.1.0",
+  "version": "2.0.0",
   "description": "__MSG_appDescription__",
   "default_locale": "ja",
 
@@ -12,7 +12,8 @@
 
   "host_permissions": [
     "https://x.com/*",
-    "https://twitter.com/*"
+    "https://twitter.com/*",
+    "https://cdn.syndication.twimg.com/*"
   ],
 
   "background": {
@@ -20,6 +21,12 @@
   },
 
   "content_scripts": [
+    {
+      "matches": ["https://x.com/*", "https://twitter.com/*"],
+      "js": ["x_video_bridge.js"],
+      "run_at": "document_start",
+      "world": "MAIN"
+    },
     {
       "matches": ["https://x.com/*", "https://twitter.com/*"],
       "js": ["content_script.js"],
