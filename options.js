@@ -6,6 +6,7 @@ const DEFAULT_SETTINGS = {
   askBeforeSave: false,
   showOverlay: true,
   preferFormat: 'orig',
+  skipSavedImages: false,
 };
 
 const form = document.getElementById('settings-form');
@@ -20,6 +21,7 @@ async function loadSettings() {
   document.getElementById('preferFormat').value = settings.preferFormat;
   document.getElementById('showOverlay').checked = settings.showOverlay;
   document.getElementById('askBeforeSave').checked = settings.askBeforeSave;
+  document.getElementById('skipSavedImages').checked = settings.skipSavedImages;
   document.getElementById('language').value = SUPPORTED_LANGS.includes(settings.language)
     ? settings.language
     : DEFAULT_LANG;
@@ -35,6 +37,7 @@ form.addEventListener('submit', async (e) => {
     preferFormat: document.getElementById('preferFormat').value,
     showOverlay: document.getElementById('showOverlay').checked,
     askBeforeSave: document.getElementById('askBeforeSave').checked,
+    skipSavedImages: document.getElementById('skipSavedImages').checked,
     language: document.getElementById('language').value,
   };
 

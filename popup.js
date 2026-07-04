@@ -62,6 +62,11 @@ function renderImages(images) {
     img.alt = t('imageAlt', [(idx + 1).toString()]);
     img.loading = 'lazy';
 
+    const badge = document.createElement('span');
+    badge.className = 'saved-badge';
+    badge.textContent = '✓';
+    badge.title = t('savedImageBadgeTitle');
+
     const btn = document.createElement('button');
     btn.className = 'item-dl-btn';
     btn.title = t('btnSaveThis');
@@ -74,12 +79,29 @@ function renderImages(images) {
       </svg>
     `;
     btn.addEventListener('click', () => {
-      chrome.runtime.sendMessage({ type: 'START_DOWNLOAD', payload: [imgInfo] });
+      chrome.runtime.sendMessage({ type: 'START_DOWNLOAD', payload: [imgInfo] }, () => {
+        updateSavedStatus();
+      });
     });
 
     item.appendChild(img);
+    item.appendChild(badge);
     item.appendChild(btn);
     imageGrid.appendChild(item);
+  });
+
+  updateSavedStatus();
+}
+
+function updateSavedStatus() {
+  if (!currentImages.length) return;
+
+  chrome.runtime.sendMessage({ type: 'GET_SAVED_IMAGE_STATUS', payload: currentImages }, (response) => {
+    if (chrome.runtime.lastError) return;
+    const saved = response?.saved || [];
+    imageGrid.querySelectorAll('.preview-item').forEach((item, idx) => {
+      item.classList.toggle('is-saved', Boolean(saved[idx]));
+    });
   });
 }
 

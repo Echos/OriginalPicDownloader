@@ -13,6 +13,7 @@
   "btnDownloadAll": { "message": "すべてダウンロード" },
   "btnDownloading": { "message": "ダウンロード開始..." },
   "btnSaveThis":    { "message": "この画像を保存" },
+  "savedImageBadgeTitle": { "message": "保存済みの画像" },
   "imageCount": {
     "message": "$COUNT$ 枚",
     "placeholders": { "count": { "content": "$1", "example": "3" } }
@@ -46,6 +47,8 @@
   "labelShowOverlay":  { "message": "ツイート画像の上にダウンロードボタンを表示する" },
   "labelAskBeforeSave":{ "message": "保存前に保存先の確認ダイアログを表示する" },
   "hintAskBeforeSave": { "message": "ON にすると毎回ダイアログが開きます。ブラウザの設定より優先されます。" },
+  "labelSkipSavedImages": { "message": "保存済みの画像は再保存しない" },
+  "hintSkipSavedImages":  { "message": "ON にすると、過去に保存したことがある画像はダウンロードを開始しません。" },
 
   "sectionShortcuts":    { "message": "ショートカットキー" },
   "shortcutHoverSave":   { "message": "ホバー中の画像を保存" },

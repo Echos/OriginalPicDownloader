@@ -127,7 +127,7 @@
   <div class="lang-badge">日本語</div>
 
   <h1>プライバシーポリシー</h1>
-  <p class="meta">最終更新日: 2026年4月11日</p>
+  <p class="meta">最終更新日: 2026年7月4日</p>
 
   <h2>1. 概要</h2>
   <p>
@@ -152,9 +152,14 @@
         <td>chrome.storage.sync（端末内のみ）</td>
         <td>設定の保持・同期</td>
       </tr>
+      <tr>
+        <td>保存済み画像の判定キー（画像 URL から生成したホスト名とパス）</td>
+        <td>chrome.storage.local（端末内のみ）</td>
+        <td>保存済みマークの表示・重複保存防止</td>
+      </tr>
     </tbody>
   </table>
-  <p>画像の URL や閲覧履歴、個人情報は一切記録・送信しません。</p>
+  <p>保存済み判定キーは端末内にのみ保存され、外部サーバーへ送信されません。閲覧履歴や個人情報は一切記録・送信しません。</p>
 
   <h2>3. 使用する権限</h2>
   <table>
@@ -168,7 +173,7 @@
       </tr>
       <tr>
         <td><code>storage</code></td>
-        <td>ファイル名パターン・保存先・表示言語などのユーザー設定を端末に保存・同期するため</td>
+        <td>ファイル名パターン・保存先・表示言語などのユーザー設定、および保存済み画像の判定キーを端末に保存するため</td>
       </tr>
       <tr>
         <td>ホスト権限 (x.com / twitter.com)</td>
@@ -207,6 +212,16 @@
     </thead>
     <tbody>
       <tr>
+        <td>v1.1.0</td>
+        <td>2026-07-04</td>
+        <td>保存済み画像のマーク表示、保存済み画像の重複ダウンロード防止オプションを追加</td>
+      </tr>
+      <tr>
+        <td>v1.0.2</td>
+        <td>2026-04-18</td>
+        <td>A キーでフォーカス中の投稿内の最初の画像をプレビュー表示できるショートカットを追加</td>
+      </tr>
+      <tr>
         <td>v1.0.1</td>
         <td>2026-04-11</td>
         <td>動画・GIF コンテナへの干渉を修正、j/k キーナビゲーション追加、d キーのダウンロード処理統合、Ko-fi サポートボタン追加、不要な activeTab パーミッション削除</td>
@@ -225,7 +240,7 @@
   <div class="lang-badge">English</div>
 
   <h1>Privacy Policy</h1>
-  <p class="meta">Last updated: April 11, 2026</p>
+  <p class="meta">Last updated: July 4, 2026</p>
 
   <h2>1. Overview</h2>
   <p>
@@ -245,9 +260,14 @@
         <td>chrome.storage.sync (local device only)</td>
         <td>Persisting and syncing preferences</td>
       </tr>
+      <tr>
+        <td>Already-saved image identifiers (host and path generated from the image URL)</td>
+        <td>chrome.storage.local (local device only)</td>
+        <td>Displaying already-saved marks and preventing duplicate downloads</td>
+      </tr>
     </tbody>
   </table>
-  <p>No image URLs, browsing history, or personal information is recorded or transmitted.</p>
+  <p>Already-saved image identifiers are stored only on the local device and are never sent to an external server. No browsing history or personal information is recorded or transmitted.</p>
 
   <h2>3. Permissions Used</h2>
   <table>
@@ -261,7 +281,7 @@
       </tr>
       <tr>
         <td><code>storage</code></td>
-        <td>Required to persist and sync user preferences such as filename pattern, save directory, and display language</td>
+        <td>Required to persist user preferences such as filename pattern, save directory, and display language, and to store already-saved image identifiers on the local device</td>
       </tr>
       <tr>
         <td>Host permissions (x.com / twitter.com)</td>
@@ -297,6 +317,16 @@
       <tr><th>Version</th><th>Release Date</th><th>Changes</th></tr>
     </thead>
     <tbody>
+      <tr>
+        <td>v1.1.0</td>
+        <td>2026-07-04</td>
+        <td>Added already-saved image marks and an option to prevent duplicate downloads for already-saved images</td>
+      </tr>
+      <tr>
+        <td>v1.0.2</td>
+        <td>2026-04-18</td>
+        <td>Added the A-key shortcut to preview the first image in the focused post</td>
+      </tr>
       <tr>
         <td>v1.0.1</td>
         <td>2026-04-11</td>

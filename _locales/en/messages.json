@@ -13,6 +13,7 @@
   "btnDownloadAll": { "message": "Download All" },
   "btnDownloading": { "message": "Downloading..." },
   "btnSaveThis":    { "message": "Save this image" },
+  "savedImageBadgeTitle": { "message": "Already saved" },
   "imageCount": {
     "message": "$COUNT$ image(s)",
     "placeholders": { "count": { "content": "$1", "example": "3" } }
@@ -46,6 +47,8 @@
   "labelShowOverlay":  { "message": "Show download button on post images" },
   "labelAskBeforeSave":{ "message": "Show save dialog before downloading" },
   "hintAskBeforeSave": { "message": "A dialog will open for each download, overriding browser settings." },
+  "labelSkipSavedImages": { "message": "Do not save images that were already saved" },
+  "hintSkipSavedImages":  { "message": "When enabled, downloads are not started for images that were saved before." },
 
   "sectionShortcuts":    { "message": "Keyboard Shortcuts" },
   "shortcutHoverSave":   { "message": "Save hovered image" },

@@ -3,6 +3,7 @@
 
 const XIV_ATTR = 'data-xiv-processed';
 const XIV_BTN_CLASS = 'xiv-dl-btn';
+const XIV_SAVED_BADGE_CLASS = 'xiv-saved-badge';
 
 // ホバー・フォーカス状態を追跡する
 const state = {
@@ -11,7 +12,9 @@ const state = {
   focusedArticle: null,
   settings: {
     showOverlay: true,
+    skipSavedImages: false,
   },
+  savedImageKeys: new Set(),
 };
 
 // 選択言語のメッセージを保持する
@@ -31,13 +34,14 @@ async function loadCsMessages(lang) {
 
 // 設定を読み込む
 async function loadSettings() {
-  const s = await chrome.storage.sync.get({ showOverlay: true, language: 'ja' });
+  const s = await chrome.storage.sync.get({ showOverlay: true, skipSavedImages: false, language: 'ja' });
   state.settings = s;
   await loadCsMessages(s.language || 'ja');
   // showOverlay 変更時にオーバーレイの表示/非表示を切り替え
   document.querySelectorAll(`.${XIV_BTN_CLASS}-wrap`).forEach((el) => {
-    el.style.display = s.showOverlay ? '' : 'none';
+    updateSavedMarker(el, el.classList.contains('xiv-is-saved'));
   });
+  scheduleSavedMarkerRefresh();
 }
 
 // ============================================================
@@ -55,6 +59,88 @@ function toOriginalUrl(src) {
     return src.replace(/:(?:thumb|small|medium|large|\d+x\d+)$/, ':orig');
   } catch (_) {
     return src;
+  }
+}
+
+function getImageKey(src) {
+  if (!src) return '';
+  try {
+    const url = new URL(src);
+    if (url.hostname.includes('pbs.twimg.com')) {
+      return `${url.hostname}${url.pathname}`;
+    }
+    url.search = '';
+    url.hash = '';
+    return url.toString();
+  } catch (_) {
+    return src.replace(/([:?&]name=)(?:thumb|small|medium|large|orig|\d+x\d+)/, '$1orig');
+  }
+}
+
+function requestSavedStatus(images) {
+  return new Promise((resolve) => {
+    chrome.runtime.sendMessage({ type: 'GET_SAVED_IMAGE_STATUS', payload: images }, (response) => {
+      if (chrome.runtime.lastError) {
+        resolve([]);
+        return;
+      }
+      resolve(response?.saved || []);
+    });
+  });
+}
+
+function getImageUrlFromTarget(el) {
+  const container = el.closest?.('div[data-testid="tweetPhoto"]');
+  const img = container?.querySelector('img');
+  if (!img) return el.dataset.imageUrl || '';
+  return toOriginalUrl(img.src || img.currentSrc || '');
+}
+
+function refreshTargetImageUrl(el) {
+  const imageUrl = getImageUrlFromTarget(el);
+  if (imageUrl) {
+    el.dataset.imageUrl = imageUrl;
+  }
+  return imageUrl;
+}
+
+let savedMarkerRefreshTimer = null;
+
+function scheduleSavedMarkerRefresh() {
+  clearTimeout(savedMarkerRefreshTimer);
+  savedMarkerRefreshTimer = setTimeout(refreshSavedMarkers, 100);
+}
+
+async function refreshSavedMarkers() {
+  const targets = [
+    ...document.querySelectorAll(`.${XIV_BTN_CLASS}-wrap[data-image-url]`),
+    ...document.querySelectorAll(`#${XIV_OVERLAY_ID} [data-image-url]`),
+  ].filter((el) => refreshTargetImageUrl(el));
+  if (!targets.length) return;
+
+  const images = targets.map((el) => ({ url: el.dataset.imageUrl }));
+  const saved = await requestSavedStatus(images);
+  targets.forEach((el, idx) => {
+    const key = getImageKey(el.dataset.imageUrl);
+    if (saved[idx]) state.savedImageKeys.add(key);
+    updateSavedMarker(el, saved[idx]);
+  });
+}
+
+function updateSavedMarker(el, isSaved) {
+  el.classList.toggle('xiv-is-saved', Boolean(isSaved));
+  const badge = el.matches?.(`.${XIV_SAVED_BADGE_CLASS}`)
+    ? el
+    : el.querySelector(`.${XIV_SAVED_BADGE_CLASS}`);
+  if (badge) {
+    badge.hidden = !isSaved;
+    badge.style.display = isSaved ? 'flex' : 'none';
+    badge.title = csT('savedImageBadgeTitle');
+  }
+  if (el.classList.contains(`${XIV_BTN_CLASS}-wrap`)) {
+    const btn = el.querySelector(`.${XIV_BTN_CLASS}`);
+    if (btn) btn.style.display = state.settings.showOverlay ? 'flex' : 'none';
+    el.style.display = state.settings.showOverlay || isSaved ? 'flex' : 'none';
   }
 }
 
@@ -99,13 +185,13 @@ function collectImages(article) {
 // ダウンロードボタンのオーバーレイを注入する
 // ============================================================
 function injectOverlay(article) {
-  if (article.hasAttribute(XIV_ATTR)) return;
   article.setAttribute(XIV_ATTR, 'true');
 
   const photoContainers = article.querySelectorAll('div[data-testid="tweetPhoto"]');
   photoContainers.forEach((container, idx) => {
     // 動画コンテナにはオーバーレイを注入しない
     if (isVideoContainer(container)) return;
+    if (container.querySelector(`.${XIV_BTN_CLASS}-wrap`)) return;
     // コンテナが既に position: relative でなければ設定
     const cs = getComputedStyle(container);
     if (cs.position === 'static') {
@@ -115,12 +201,38 @@ function injectOverlay(article) {
 
     const wrap = document.createElement('div');
     wrap.className = `${XIV_BTN_CLASS}-wrap`;
+    const img = container.querySelector('img');
+    const imageUrl = toOriginalUrl(img?.src || img?.currentSrc || '');
+    wrap.dataset.imageUrl = imageUrl;
     wrap.style.cssText = `
       position: absolute;
       top: 6px;
       right: 6px;
       z-index: 9999;
-      display: ${state.settings.showOverlay ? '' : 'none'};
+      display: ${state.settings.showOverlay ? 'flex' : 'none'};
+      align-items: center;
+      gap: 4px;
+    `;
+
+    const badge = document.createElement('span');
+    badge.className = XIV_SAVED_BADGE_CLASS;
+    badge.hidden = true;
+    badge.textContent = '✓';
+    badge.title = csT('savedImageBadgeTitle');
+    badge.style.cssText = `
+      min-width: 24px;
+      height: 24px;
+      border-radius: 9999px;
+      background: rgba(22,163,74,0.92);
+      color: #fff;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 15px;
+      font-weight: 800;
+      box-shadow: 0 1px 5px rgba(0,0,0,0.35);
+      pointer-events: none;
+      display: none;
     `;
 
     const btn = document.createElement('button');
@@ -141,7 +253,7 @@ function injectOverlay(article) {
       padding: 4px 6px;
       cursor: pointer;
       color: #fff;
-      display: flex;
+      display: ${state.settings.showOverlay ? 'flex' : 'none'};
       align-items: center;
       justify-content: center;
       transition: background 0.15s;
@@ -167,9 +279,12 @@ function injectOverlay(article) {
       });
     });
 
+    wrap.appendChild(badge);
     wrap.appendChild(btn);
     container.appendChild(wrap);
+    updateSavedMarker(wrap, state.savedImageKeys.has(getImageKey(refreshTargetImageUrl(wrap) || imageUrl)));
   });
+  scheduleSavedMarkerRefresh();
 }
 
 // ============================================================
@@ -216,6 +331,32 @@ function renderOverlay() {
   `;
   img.addEventListener('click', (e) => e.stopPropagation());
   overlay.appendChild(img);
+
+  const savedBadge = document.createElement('div');
+  savedBadge.className = XIV_SAVED_BADGE_CLASS;
+  savedBadge.dataset.imageUrl = imgInfo.url;
+  savedBadge.hidden = !state.savedImageKeys.has(getImageKey(imgInfo.url));
+  savedBadge.title = csT('savedImageBadgeTitle');
+  savedBadge.textContent = '✓';
+  savedBadge.style.cssText = `
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    width: 34px;
+    height: 34px;
+    border-radius: 9999px;
+    background: rgba(22,163,74,0.92);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    font-weight: 800;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.35);
+    pointer-events: none;
+    display: none;
+  `;
+  overlay.appendChild(savedBadge);
 
   if (isMultiple) {
     // 画像カウンター
@@ -278,6 +419,7 @@ function renderOverlay() {
 
   overlay.addEventListener('click', closeImageOverlay);
   document.body.appendChild(overlay);
+  scheduleSavedMarkerRefresh();
 }
 
 function showImageOverlay(images, startIndex = 0) {
@@ -440,6 +582,16 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     loadSettings();
     return false;
   }
+
+  if (message.type === 'SAVED_IMAGES_UPDATED') {
+    (message.keys || []).forEach((key) => state.savedImageKeys.add(key));
+    document.querySelectorAll('[data-image-url]').forEach((el) => {
+      refreshTargetImageUrl(el);
+      updateSavedMarker(el, state.savedImageKeys.has(getImageKey(el.dataset.imageUrl)));
+    });
+    scheduleSavedMarkerRefresh();
+    return false;
+  }
 });
 
 // ============================================================
@@ -450,6 +602,7 @@ function processNewArticles(root) {
   if (root.matches?.('article[data-testid="tweet"]')) {
     injectOverlay(root);
   }
+  root.closest?.('article[data-testid="tweet"]') && injectOverlay(root.closest('article[data-testid="tweet"]'));
   // root 配下の article を探索
   root.querySelectorAll?.('article[data-testid="tweet"]').forEach((article) => {
     injectOverlay(article);
