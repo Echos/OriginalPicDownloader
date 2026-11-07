@@ -12,7 +12,28 @@ const DEFAULT_SETTINGS = {
 
 const SAVED_IMAGES_KEY = 'savedImages';
 const SAVED_MEDIA_KEY = 'savedMedia';
+const DOWNLOAD_INTERVAL_MS = 150;
 const pendingSavedMediaKeys = new Set();
+let savedMediaWriteQueue = Promise.resolve();
+
+// 開始後に中断したダウンロードは保存済みの記録から取り消す
+chrome.downloads.onChanged.addListener(async (delta) => {
+  if (delta.state?.current !== 'interrupted') return;
+  const [item] = await chrome.downloads.search({ id: delta.id });
+  if (item?.byExtensionId !== chrome.runtime.id) return;
+
+  const mediaKey = getMediaKey(item.url);
+  const startedAt = Date.parse(item.startTime);
+  let removed = false;
+  // 今回より前に保存を完了している場合は記録を残す
+  await updateSavedMedia((savedMedia) => {
+    if (savedMedia[mediaKey] >= startedAt) {
+      delete savedMedia[mediaKey];
+      removed = true;
+    }
+  });
+  if (removed) notifyTabs('SAVED_IMAGES_REMOVED', [mediaKey]);
+});
 
 // ショートカットキーのコマンドを受信
 chrome.commands.onCommand.addListener(async (command) => {
@@ -63,59 +84,75 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 // ダウンロード処理
 async function handleDownloads(images) {
   const settings = await chrome.storage.sync.get(DEFAULT_SETTINGS);
-  const savedMedia = await getSavedMedia();
-  const newlySavedKeys = [];
+  let saved = 0;
   let skipped = 0;
+  let started = 0;
 
   for (let i = 0; i < images.length; i++) {
     const mediaKey = getMediaKey(images[i].url);
-    if (settings.skipSavedImages && mediaKey && (savedMedia[mediaKey] || pendingSavedMediaKeys.has(mediaKey))) {
-      skipped++;
-      continue;
-    }
     if (settings.skipSavedImages && mediaKey) {
+      const savedMedia = await getSavedMedia();
+      if (savedMedia[mediaKey] || pendingSavedMediaKeys.has(mediaKey)) {
+        skipped++;
+        continue;
+      }
       pendingSavedMediaKeys.add(mediaKey);
     }
 
+    // 複数画像を一定間隔で逐次ダウンロード
+    if (started++ > 0) await new Promise((resolve) => setTimeout(resolve, DOWNLOAD_INTERVAL_MS));
+
     const filename = buildFilename(settings, images[i], i, images.length);
     const url = toPreferredUrl(images[i].url, settings.preferFormat, images[i].type);
-
-    await new Promise((resolve) => {
-      setTimeout(() => {
-        chrome.downloads.download(
-          {
-            url,
-            filename,
-            conflictAction: 'uniquify',
-            saveAs: settings.askBeforeSave,
-          },
-          (downloadId) => {
-            if (chrome.runtime.lastError) {
-              console.warn('[XIVb] download error:', chrome.runtime.lastError.message);
-              if (mediaKey) pendingSavedMediaKeys.delete(mediaKey);
-            } else if (downloadId && mediaKey) {
-              savedMedia[mediaKey] = Date.now();
-              newlySavedKeys.push(mediaKey);
-            }
-            resolve();
+    const downloadId = await new Promise((resolve) => {
+      chrome.downloads.download(
+        {
+          url,
+          filename,
+          conflictAction: 'uniquify',
+          saveAs: settings.askBeforeSave,
+        },
+        (id) => {
+          if (chrome.runtime.lastError) {
+            console.warn('[XIVb] download error:', chrome.runtime.lastError.message);
+            resolve(null);
+            return;
           }
-        );
-      }, i * 150); // 複数画像を150ms間隔で逐次ダウンロード
+          resolve(id);
+        }
+      );
     });
+
+    if (downloadId) saved++;
+    if (mediaKey) {
+      // 全件の完了を待たず、1件ごとに記録して画面へ反映する
+      if (downloadId) {
+        await updateSavedMedia((savedMedia) => {
+          savedMedia[mediaKey] ||= Date.now();
+        });
+      }
+      notifyTabs(downloadId ? 'SAVED_IMAGES_UPDATED' : 'SAVED_IMAGES_REMOVED', [mediaKey]);
+      pendingSavedMediaKeys.delete(mediaKey);
+    }
   }
 
-  if (newlySavedKeys.length > 0) {
-    await chrome.storage.local.set({ [SAVED_MEDIA_KEY]: savedMedia });
-    notifySavedImagesUpdated(newlySavedKeys);
-  }
-  newlySavedKeys.forEach((key) => pendingSavedMediaKeys.delete(key));
-
-  return { saved: newlySavedKeys.length, skipped };
+  return { saved, skipped };
 }
 
 async function getSavedMedia() {
   const result = await chrome.storage.local.get({ [SAVED_IMAGES_KEY]: {}, [SAVED_MEDIA_KEY]: {} });
   return { ...(result[SAVED_IMAGES_KEY] || {}), ...(result[SAVED_MEDIA_KEY] || {}) };
+}
+
+// 並行する保存が互いの記録を上書きしないよう、読み書きを直列化する
+function updateSavedMedia(mutate) {
+  const task = savedMediaWriteQueue.then(async () => {
+    const savedMedia = await getSavedMedia();
+    mutate(savedMedia);
+    await chrome.storage.local.set({ [SAVED_MEDIA_KEY]: savedMedia });
+  });
+  savedMediaWriteQueue = task.catch(() => {});
+  return task;
 }
 
 async function getSavedMediaStatus(images) {
@@ -126,11 +163,11 @@ async function getSavedMediaStatus(images) {
   });
 }
 
-async function notifySavedImagesUpdated(keys) {
+async function notifyTabs(type, keys) {
   const tabs = await chrome.tabs.query({ url: ['https://x.com/*', 'https://twitter.com/*'] });
   for (const tab of tabs) {
     if (!tab.id) continue;
-    chrome.tabs.sendMessage(tab.id, { type: 'SAVED_IMAGES_UPDATED', keys }).catch(() => {});
+    chrome.tabs.sendMessage(tab.id, { type, keys }).catch(() => {});
   }
 }
 
