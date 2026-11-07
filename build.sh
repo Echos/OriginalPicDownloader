@@ -5,6 +5,9 @@ set -e
 VERSION=$(grep '"version"' manifest.json | grep -oE '[0-9]+\.[0-9]+\.[0-9]+')
 ZIP_NAME="OriginalPicDownloader_v${VERSION}.zip"
 
+# Windows では python3 コマンドが存在しないことがある
+PYTHON=$(command -v python3 || command -v python || true)
+
 # 既存 zip を削除
 rm -f "$ZIP_NAME"
 
@@ -20,7 +23,7 @@ if command -v zip >/dev/null 2>&1; then
     --exclude ".gitignore" \
     --exclude "*.zip"
 else
-  python3 - "$ZIP_NAME" <<'PY'
+  "$PYTHON" - "$ZIP_NAME" <<'PY'
 import os
 import sys
 import zipfile
@@ -48,7 +51,7 @@ echo "Contents:"
 if command -v unzip >/dev/null 2>&1; then
   unzip -l "$ZIP_NAME"
 else
-  python3 - "$ZIP_NAME" <<'PY'
+  "$PYTHON" - "$ZIP_NAME" <<'PY'
 import sys
 import zipfile
 
