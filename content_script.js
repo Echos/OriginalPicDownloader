@@ -13,6 +13,7 @@ const state = {
   settings: {
     showOverlay: true,
     skipSavedImages: false,
+    askBeforeSave: false,
   },
   savedMediaKeys: new Set(),
   videoUrlsByTweetId: new Map(),
@@ -36,7 +37,7 @@ async function loadCsMessages(lang) {
 
 // 設定を読み込む
 async function loadSettings() {
-  const s = await chrome.storage.sync.get({ showOverlay: true, skipSavedImages: false, language: 'ja' });
+  const s = await chrome.storage.sync.get({ showOverlay: true, skipSavedImages: false, askBeforeSave: false, language: 'ja' });
   state.settings = s;
   await loadCsMessages(s.language || 'ja');
   // showOverlay 変更時にオーバーレイの表示/非表示を切り替え
@@ -156,7 +157,8 @@ async function refreshSavedMarkers() {
   targets.forEach((el, idx) => {
     const key = getMediaKey(el.dataset.mediaUrl);
     if (saved[idx]) state.savedMediaKeys.add(key);
-    updateSavedMarker(el, saved[idx]);
+    // 保存指示の直後はまだ記録前のことがあるため、画面側の状態も加味する
+    updateSavedMarker(el, state.savedMediaKeys.has(key));
   });
 }
 
@@ -164,17 +166,48 @@ function updateSavedMarker(el, isSaved) {
   el.classList.toggle('xiv-is-saved', Boolean(isSaved));
   const badge = el.matches?.(`.${XIV_SAVED_BADGE_CLASS}`)
     ? el
-    : el.querySelector(`.${XIV_SAVED_BADGE_CLASS}`);
+    : el.parentElement?.querySelector(`:scope > .${XIV_SAVED_BADGE_CLASS}`);
   if (badge) {
     badge.hidden = !isSaved;
     badge.style.display = isSaved ? 'flex' : 'none';
     badge.title = csT('savedImageBadgeTitle');
   }
   if (el.classList.contains(`${XIV_BTN_CLASS}-wrap`)) {
-    const btn = el.querySelector(`.${XIV_BTN_CLASS}`);
-    if (btn) btn.style.display = state.settings.showOverlay ? 'flex' : 'none';
-    el.style.display = state.settings.showOverlay || isSaved ? 'flex' : 'none';
+    el.style.display = state.settings.showOverlay ? 'flex' : 'none';
   }
+}
+
+function renderSavedMarkers() {
+  document.querySelectorAll('[data-media-url]').forEach((el) => {
+    refreshTargetImageUrl(el);
+    updateSavedMarker(el, state.savedMediaKeys.has(getMediaKey(el.dataset.mediaUrl)));
+  });
+}
+
+// 保存指示と同時にチェックを表示する。失敗時は SAVED_IMAGES_REMOVED で取り消す
+function markMediaSaved(media) {
+  // 保存ダイアログを出す設定では、ファイル名の確定まで保存が成立しない
+  if (state.settings.askBeforeSave) return;
+  media.forEach((item) => {
+    const key = getMediaKey(item.url);
+    if (key) state.savedMediaKeys.add(key);
+  });
+  renderSavedMarkers();
+}
+
+function unmarkMediaKeys(keys) {
+  keys.forEach((key) => state.savedMediaKeys.delete(key));
+  // 過去に保存済みのメディアはチェックを残すため、記録を読み直して反映する
+  scheduleSavedMarkerRefresh();
+}
+
+function startDownload(media) {
+  markMediaSaved(media);
+  chrome.runtime.sendMessage({ type: 'START_DOWNLOAD', payload: media }, () => {
+    if (chrome.runtime.lastError) {
+      unmarkMediaKeys(media.map((item) => getMediaKey(item.url)));
+    }
+  });
 }
 
 // ============================================================
@@ -294,6 +327,22 @@ function getVideoScore(url) {
   return Number(match[1]) * Number(match[2]);
 }
 
+// 画像やDOMからURLを取得できた動画では、ブリッジとネットワークの応答を待たない
+async function getFallbackVideoUrls(article, containers) {
+  const needsFallback = containers.some((container) => (
+    isVideoContainer(container) && !collectMediaFromContainer(article, container).length
+  ));
+  if (!needsFallback) return [];
+
+  const { tweetId } = extractTweetInfo(article);
+  requestBridgeVideoUrls();
+  await new Promise((resolve) => setTimeout(resolve, 100));
+  return chooseBestVideoUrls([
+    ...getCachedVideoUrls(tweetId),
+    ...(await getSyndicationVideoUrls(tweetId)),
+  ]);
+}
+
 function collectMediaFromContainer(article, container) {
   const info = extractTweetInfo(article);
   const video = container.querySelector('video');
@@ -311,12 +360,21 @@ function collectMediaFromContainer(article, container) {
 }
 
 async function collectMediaFromContainerAsync(article, container, fallbackVideoUrls = []) {
-  const media = collectMediaFromContainer(article, container);
-  if (media.length || !isVideoContainer(container)) return media;
+  let media = collectMediaFromContainer(article, container);
+  if (!media.length && isVideoContainer(container)) {
+    const info = extractTweetInfo(article);
+    const url = fallbackVideoUrls.shift();
+    media = url ? [{ type: 'video', url, username: info.username, tweetId: info.tweetId }] : [];
+  }
 
-  const info = extractTweetInfo(article);
-  const url = fallbackVideoUrls.shift();
-  return url ? [{ type: 'video', url, username: info.username, tweetId: info.tweetId }] : [];
+  // 解決したURLをマーカーの判定に使えるよう、ボタン側にも反映する
+  const wrap = container.querySelector(`.${XIV_BTN_CLASS}-wrap`);
+  if (wrap && media.length) {
+    wrap.dataset.mediaUrl = media[0].url;
+    wrap.dataset.mediaType = media[0].type || 'image';
+    wrap.dataset.imageUrl = media[0].url;
+  }
+  return media;
 }
 
 // article 内の全メディア情報を収集する
@@ -339,16 +397,11 @@ function collectMedia(article) {
 
 async function collectMediaAsync(article) {
   const info = extractTweetInfo(article);
-  requestBridgeVideoUrls();
-  await new Promise((resolve) => setTimeout(resolve, 100));
-  const fallbackVideoUrls = chooseBestVideoUrls([
-    ...getCachedVideoUrls(info.tweetId),
-    ...(await getSyndicationVideoUrls(info.tweetId)),
-  ]);
+  const containers = getMediaContainers(article);
+  const fallbackVideoUrls = await getFallbackVideoUrls(article, containers);
   const media = [];
   const seen = new Set();
 
-  const containers = getMediaContainers(article);
   for (const container of containers) {
     const items = await collectMediaFromContainerAsync(article, container, fallbackVideoUrls);
     items.forEach((item) => {
@@ -360,6 +413,17 @@ async function collectMediaAsync(article) {
   }
 
   return media;
+}
+
+async function collectHoveredMedia(article, hoveredImg) {
+  const container = hoveredImg.closest('div[data-testid="tweetPhoto"], div[data-testid="videoPlayer"]');
+  if (container) {
+    const fallbackUrls = await getFallbackVideoUrls(article, [container]);
+    return collectMediaFromContainerAsync(article, container, fallbackUrls);
+  }
+  const info = extractTweetInfo(article);
+  const orig = hoveredImg.tagName === 'IMG' ? toOriginalUrl(hoveredImg.src || hoveredImg.currentSrc || '') : '';
+  return orig ? [{ type: 'image', url: orig, username: info.username, tweetId: info.tweetId }] : [];
 }
 
 // ============================================================
@@ -401,6 +465,10 @@ function injectOverlay(article) {
     badge.textContent = '✓';
     badge.title = csT('savedImageBadgeTitle');
     badge.style.cssText = `
+      position: absolute;
+      top: 6px;
+      left: 6px;
+      z-index: 9999;
       min-width: 24px;
       height: 24px;
       border-radius: 9999px;
@@ -449,26 +517,13 @@ function injectOverlay(article) {
     btn.addEventListener('click', async (e) => {
       e.preventDefault();
       e.stopPropagation();
-      const info = extractTweetInfo(article);
-      requestBridgeVideoUrls();
-      await new Promise((resolve) => setTimeout(resolve, 100));
-      const fallbackUrls = chooseBestVideoUrls([
-        ...getCachedVideoUrls(info.tweetId),
-        ...(await getSyndicationVideoUrls(info.tweetId)),
-      ]);
+      const fallbackUrls = await getFallbackVideoUrls(article, [container]);
       const media = await collectMediaFromContainerAsync(article, container, fallbackUrls);
-      if (!media.length) return;
-      wrap.dataset.mediaUrl = media[0].url;
-      wrap.dataset.mediaType = media[0].type || 'image';
-      wrap.dataset.imageUrl = media[0].url;
-      chrome.runtime.sendMessage({
-        type: 'START_DOWNLOAD',
-        payload: media,
-      });
+      if (media.length) startDownload(media);
     });
 
-    wrap.appendChild(badge);
     wrap.appendChild(btn);
+    container.appendChild(badge);
     container.appendChild(wrap);
     updateSavedMarker(wrap, state.savedMediaKeys.has(getMediaKey(refreshTargetImageUrl(wrap) || imageUrl)));
   });
@@ -517,6 +572,7 @@ function renderOverlay() {
     mediaEl.alt = '';
   }
   mediaEl.style.cssText = `
+    display: block;
     max-height: 90vh;
     max-width: 90vw;
     object-fit: contain;
@@ -525,19 +581,25 @@ function renderOverlay() {
     box-shadow: 0 4px 24px rgba(0,0,0,0.6);
   `;
   mediaEl.addEventListener('click', (e) => e.stopPropagation());
-  overlay.appendChild(mediaEl);
+
+  // チェックを画像の左上に重ねるため、画像と同じ大きさの枠に入れる
+  const mediaFrame = document.createElement('div');
+  mediaFrame.style.cssText = `
+    position: relative;
+    flex: none;
+  `;
+  mediaFrame.appendChild(mediaEl);
+  overlay.appendChild(mediaFrame);
 
   const savedBadge = document.createElement('div');
   savedBadge.className = XIV_SAVED_BADGE_CLASS;
   savedBadge.dataset.mediaUrl = imgInfo.url;
   savedBadge.dataset.mediaType = imgInfo.type || 'image';
-  savedBadge.hidden = !state.savedMediaKeys.has(getMediaKey(imgInfo.url));
-  savedBadge.title = csT('savedImageBadgeTitle');
   savedBadge.textContent = '✓';
   savedBadge.style.cssText = `
     position: absolute;
-    top: 16px;
-    right: 16px;
+    top: 10px;
+    left: 10px;
     width: 34px;
     height: 34px;
     border-radius: 9999px;
@@ -552,7 +614,8 @@ function renderOverlay() {
     pointer-events: none;
     display: none;
   `;
-  overlay.appendChild(savedBadge);
+  mediaFrame.appendChild(savedBadge);
+  updateSavedMarker(savedBadge, state.savedMediaKeys.has(getMediaKey(imgInfo.url)));
 
   if (isMultiple) {
     // 画像カウンター
@@ -680,14 +743,12 @@ document.addEventListener('keydown', (e) => {
 
   if (e.key === 'd') {
     if (overlayOpen) {
-      chrome.runtime.sendMessage({ type: 'START_DOWNLOAD', payload: overlayImages });
+      startDownload(overlayImages);
     } else {
       const article = state.focusedArticle;
       if (!article) return;
       collectMediaAsync(article).then((images) => {
-        if (images.length > 0) {
-          chrome.runtime.sendMessage({ type: 'START_DOWNLOAD', payload: images });
-        }
+        if (images.length > 0) startDownload(images);
       });
     }
   }
@@ -747,6 +808,11 @@ document.addEventListener('focusin', (e) => {
 // background.js からのメッセージを処理
 // ============================================================
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  const respondForDownload = (images) => {
+    markMediaSaved(images);
+    sendResponse({ images });
+  };
+
   if (message.type === 'DOWNLOAD_HOVERED') {
     const target = state.hoveredArticle || state.focusedArticle;
     if (!target) {
@@ -755,23 +821,11 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     }
     // ホバー中の画像が1枚だけの場合はそれだけ返す
     if (state.hoveredImg) {
-      const info = extractTweetInfo(target);
-      const container = state.hoveredImg.closest('div[data-testid="tweetPhoto"], div[data-testid="videoPlayer"]');
-      requestBridgeVideoUrls();
-      new Promise((resolve) => setTimeout(resolve, 100)).then(() => getSyndicationVideoUrls(info.tweetId)).then((fallbackUrls) => {
-        fallbackUrls = chooseBestVideoUrls([...getCachedVideoUrls(info.tweetId), ...fallbackUrls]);
-        const orig = state.hoveredImg.tagName === 'IMG' ? toOriginalUrl(state.hoveredImg.src || state.hoveredImg.currentSrc || '') : '';
-        return container
-          ? collectMediaFromContainerAsync(target, container, fallbackUrls)
-          : Promise.resolve(orig ? [{ type: 'image', url: orig, username: info.username, tweetId: info.tweetId }] : []);
-      }).then((media) => {
-        sendResponse({ images: media });
-      });
-      return true;
+      collectHoveredMedia(target, state.hoveredImg).then(respondForDownload);
     } else {
-      collectMediaAsync(target).then((images) => sendResponse({ images }));
-      return true;
+      collectMediaAsync(target).then(respondForDownload);
     }
+    return true;
   }
 
   if (message.type === 'DOWNLOAD_ALL_IN_POST') {
@@ -780,7 +834,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       sendResponse({ images: [] });
       return false;
     }
-    collectMediaAsync(target).then((images) => sendResponse({ images }));
+    collectMediaAsync(target).then(respondForDownload);
     return true;
   }
 
@@ -801,11 +855,12 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
   if (message.type === 'SAVED_IMAGES_UPDATED') {
     (message.keys || []).forEach((key) => state.savedMediaKeys.add(key));
-    document.querySelectorAll('[data-media-url]').forEach((el) => {
-      refreshTargetImageUrl(el);
-      updateSavedMarker(el, state.savedMediaKeys.has(getMediaKey(el.dataset.mediaUrl)));
-    });
-    scheduleSavedMarkerRefresh();
+    renderSavedMarkers();
+    return false;
+  }
+
+  if (message.type === 'SAVED_IMAGES_REMOVED') {
+    unmarkMediaKeys(message.keys || []);
     return false;
   }
 });
